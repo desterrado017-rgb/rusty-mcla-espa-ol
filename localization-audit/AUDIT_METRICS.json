@@ -1,0 +1,33 @@
+{
+  "base_commit": "b68c4d02d384f611d176170bb893053a697503af",
+  "snapshot_utc": "2026-11-05T16:54:36.336635+00:00",
+  "inventory_rows": 1801,
+  "category_counts": {
+    "B": 401,
+    "A": 885,
+    "C": 136,
+    "D": 379
+  },
+  "rows_by_source": {
+    "phase1-game-audit.tsv": 1344,
+    "phase1-hooks-audit.tsv": 36,
+    "phase1-flash-audit.tsv": 28,
+    "phase1-other-ui-audit.tsv": 385,
+    "phase1-subtitle-strings.tsv": 8
+  },
+  "source_files_lexically_inventoried": 195,
+  "base_game_plus_relevant_dependency_string_literals": 27445,
+  "canonical_raw_inventory": "localization-audit/spanish-literals.tsv.gz",
+  "canonical_source_coverage": "localization-audit/spanish-literal-coverage.tsv",
+  "catalog_entries": 120,
+  "catalog_entries_with_both_languages": 120,
+  "C_records": 136,
+  "C_records_catalog_diff_or_adapter_verified": 136,
+  "C_records_catalog_only": 0,
+  "C_records_pending": 0,
+  "note": "Records can group families and repeat candidates between independent audits. They are not unique game strings, percentages of game translation, or verified Spanish resource contents.",
+  "C_audited_records_code_coverage_percent": 100.0,
+  "C_visual_runtime_records_verified": 0,
+  "catalog_keycap_entries": 40,
+  "catalog_prompt_alias_entries": 4
+}

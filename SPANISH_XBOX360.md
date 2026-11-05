@@ -1,8 +1,13 @@
 # Español original de Xbox 360 en Rusty MCLA v0.14.0
 
 Base oficial: etiqueta `v0.14.0`, commit
-`30d8b1f3b54557664d81bb7cfc9cc33caea53647`. La rama activa es
-`feature/xbox360-spanish-original-v0.14.0`. El trabajo inicial de v0.13.0
+`30d8b1f3b54557664d81bb7cfc9cc33caea53647`. La integración inicial está en
+`feature/xbox360-spanish-original-v0.14.0`. La fase de interfaz se desarrolla en
+`feature/spanish-ui-completion-v0.14.0`, desde la base validada en Windows
+`b68c4d02d384f611d176170bb893053a697503af`, sin cambiar la rama estable.
+La auditoría actual, sus inventarios y límites de verificación están en
+[SPANISH_TRANSLATION_AUDIT.md](SPANISH_TRANSLATION_AUDIT.md).
+El trabajo inicial de v0.13.0
 se conserva en `feature/xbox360-spanish-original`.
 
 ## Configuración
@@ -49,7 +54,7 @@ del disco ni traducciones nuevas. Las pruebas nuevas usan datos sintéticos.
 | `game/src/career.rs`, menús y HUD que consultan `career.strings` | Reciben las tablas combinadas con el idioma elegido. |
 | `game/src/flash_ui.rs` y `boot.rs` | Se eliminan los índices ingleses forzados; se conserva el flujo de inicialización de v0.14.0. |
 | `game/src/game.rs`: estados ON/OFF de trucos, listas musicales y neón | Se reutilizan `G_On` y `G_Off`, claves ya usadas para esos estados por el port. Se conserva el inglés si faltan. |
-| `game/src/hooks.rs`: opciones propias del port, diagnósticos y errores | Se mantiene su texto inglés: no hay un equivalente oficial comprobado para todas estas opciones. |
+| `game/src/hooks.rs`: opciones propias del port y mensajes al jugador | Catálogo `port_text.rs` en inglés/español para adiciones verificadas del port; logs e identificadores técnicos intactos. No se presentan como traducciones de Rockstar. |
 | `game/src/game.rs`: rótulos propios de pintura, modificaciones y pantallas alternativas | Permanecen en inglés cuando no hay una clave original comprobada; no se inventan traducciones ni se asignan claves de significado dudoso. |
 | `game/src/catalog.rs` y `modcars.rs` | Los nombres añadidos por el port o por manifiestos siguen siendo respaldos ingleses; no sustituyen entradas originales. |
 
@@ -65,8 +70,10 @@ en la última. Esa ruta no consulta `StringTable` ni selecciona una columna o
 archivo por idioma. El nombre `subtitle.csv` también está en `mcla-rs/names.txt`.
 
 `game/src/main.rs` pasa los subtítulos de `CUT_INTRO` a la película inicial;
-`game/src/video.rs` solo muestra los textos y tiempos recibidos. La opción de
-subtítulos existente controla su visualización, no su localización.
+`game/src/video.rs` solo muestra los textos y tiempos recibidos. La fase de
+interfaz corrige la película inicial para respetar la opción de subtítulos ya
+cargada, como las escenas de historia. No cambia su valor predeterminado ni su
+persistencia. La opción controla la visualización, no la localización del CSV.
 
 No hay en el checkout los CSV originales, las tablas extraídas ni la ISO. Por
 tanto no se ha podido comprobar dónde están los subtítulos españoles originales,
@@ -97,8 +104,8 @@ de opciones usa una partida sintética en memoria, sin escribir partidas.
 El juego sigue necesitando los datos de la copia del usuario. No se ha ejecutado
 contra una ISO ni se ha comprobado visualmente la edición española original.
 
-Resultados de esta revisión en Linux x64, con Rust 1.99.1 y los lockfiles de
-v0.14.0 intactos:
+Resultados históricos de la integración inicial en Linux x64, con Rust 1.99.1 y
+los lockfiles de v0.14.0 intactos (no son las pruebas de la fase de interfaz):
 
 | Comprobación | Resultado |
 | --- | --- |
@@ -106,7 +113,7 @@ v0.14.0 intactos:
 | `cargo test --locked --workspace --exclude mcla --no-fail-fast` | 220 aprobadas por el runner, 0 fallidas, 12 ignoradas. |
 | `cargo test --locked -p mcla --features sdl3-sys/sdl-unix-console-build` | 805 aprobadas por el runner, 3 fallidas, 122 ignoradas. Las cuatro pruebas nuevas del juego pasan. |
 | En `launcher/`, `cargo test --locked -p mcla-support -p mcla-updater --no-fail-fast` | 133 aprobadas, 0 fallidas. |
-| Compilación Windows x64, `cargo build --locked --release --target x86_64-pc-windows-gnu -p mcla` | Pendiente: el proxy de la instancia activa rechaza `api.github.com` con 403 al consultar la dependencia estática DXC de v0.14.0. |
+| Compilación Windows x64 | Completada posteriormente en Actions para `b68c4d0`, con Rust 1.99.0, WinLibs UCRT y `--locked`; ejecución directa sin `--data` validada por el usuario: Henry aparece y la primera carrera se completa. No valida visualmente esta fase nueva. |
 
 Las tres fallidas son `lane_into_junction_matches_the_original`,
 `race_clearing_matches_the_original` y `road_density_matches_the_original`, de
@@ -117,8 +124,9 @@ cambiado ni desactivado sus comprobaciones. Otras pruebas existentes retornan
 antes de comprobar datos cuando faltan sus fixtures; su estado `ok` no valida
 los archivos reales ausentes.
 
-No se ha generado todavía un `mcla.exe` validado. Para reanudar la compilación
-Windows, la instancia que ejecuta la tarea debe tener aplicada la autorización
-de `api.github.com`; guardar o publicar otra versión de configuración no prueba
-por sí solo que esta instancia la esté usando. Se conserva `static-dxc` y sus
-verificaciones de publicación inmutable y SHA-256, sin eludirlas.
+El binario de prueba de la corrección de navegación se compiló en el
+[run 42058245472](https://github.com/desterrado017-rgb/rusty-mcla-espa-ol/actions/runs/42058245472).
+La fase de interfaz no publica otro ejecutable. Se conservan Rust 1.99.0 en los
+workflows, WinLibs UCRT, `static-dxc`, los manifiestos y los lockfiles. Las pruebas
+Linux disponibles usan Rust 1.99.1; no sustituyen la futura validación de esta
+fase en Windows con el toolchain fijado.
