@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/xbox360-spanish-original-v0.14.0
+      - fix/first-race-rival-v0.14.0
 
 permissions:
   contents: read
@@ -70,9 +71,32 @@ jobs:
           CMAKE_GENERATOR: MinGW Makefiles
         run: cargo build --locked --release -p mcla
 
+      - name: Test navigation data-root regression (Windows)
+        if: github.ref == 'refs/heads/fix/first-race-rival-v0.14.0'
+        working-directory: mcla-rs
+        env:
+          CMAKE_GENERATOR: MinGW Makefiles
+        run: cargo test --locked --release -p mcla offroad::tests::navigation_mesh_uses_runtime_root_without_raw_data_argument -- --exact
+
+      - name: Stage the separate test executable
+        if: github.ref == 'refs/heads/fix/first-race-rival-v0.14.0'
+        shell: pwsh
+        run: |
+          Copy-Item mcla-rs\target\release\mcla.exe mcla-rs\target\release\mcla-first-race-test.exe
+          Get-FileHash -Algorithm SHA256 mcla-rs\target\release\mcla-first-race-test.exe | Format-List
+
       - name: Upload mcla.exe
+        if: github.ref == 'refs/heads/feature/xbox360-spanish-original-v0.14.0'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mcla-windows-x64-spanish-v0.14.0
           path: mcla-rs/target/release/mcla.exe
+          if-no-files-found: error
+
+      - name: Upload the first-race test executable
+        if: github.ref == 'refs/heads/fix/first-race-rival-v0.14.0'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mcla-windows-x64-spanish-v0.14.0-first-rival-test-${{ github.sha }}
+          path: mcla-rs/target/release/mcla-first-race-test.exe
           if-no-files-found: error
