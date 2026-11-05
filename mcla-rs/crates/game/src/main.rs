@@ -24,6 +24,9 @@ mod camera;
 mod citymap;
 mod career;
 mod collectable_text;
+// Verified form-94 protocol; the native control/pause adapter is still pending.
+mod collectable_tutorial;
+mod collectable_tutorial_stats;
 mod opening_diag;
 mod localization;
 mod port_text;

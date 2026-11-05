@@ -156,7 +156,7 @@ STAT_INFO = {
     'xGAP': ('game activity count: pink slip', 'script'), 'xGAR': ('game activity count: cruising racer race', 'script'), 'xGAS': ('game activity count: series', 'script'),
     'xGAT': ('game activity count: tournament', 'script'), 'xGAW': ('game activity count: wager', 'script'), 'xGAK': ('game activity count: payback', 'guess (script)'),
     'xLRW': ('last race was won (1) - feeds the streaks', 'code sub_822D0438'), 'xMOW': ('wins (second counter, shown in the summary block)', 'code sub_822D0438'),
-    'xRRT': ('race restarts by race (sub id)', 'code sub_82255F78'), 'xTCO': ('all collectables found flag', 'script Collectables.sco'),
+    'xRRT': ('race restarts by race (sub id)', 'code sub_82255F78'), 'xTCO': ('collectable tutorial completed flag', 'script Collectables.sco: set after form 94 closes'),
 }
 
 _RACE_LIST = None
