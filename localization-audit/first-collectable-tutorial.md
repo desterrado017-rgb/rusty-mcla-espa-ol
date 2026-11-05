@@ -103,6 +103,11 @@ entre tablas, lista de objetos o `gCOL` al cargar.
 
 ## Integración que queda pendiente
 
+La [investigación de fidelidad desde `188dc57`](form94-fidelity-investigation.md)
+documenta el puente Flash, las limitaciones reales de entrada del Player y las
+funciones nativas que faltan. No se ha recibido el `.r27` original. Esta fase no
+reescribe el backend ni demuestra todavía botón, pausa, animaciones o resultado.
+
 El informe y el usuario dejan explícitamente sin acreditar los controles y la
 pausa. El código disponible no contiene la implementación nativa de esas partes.
 El runner genérico marca estadísticas antes de mostrar y no permite inferir el

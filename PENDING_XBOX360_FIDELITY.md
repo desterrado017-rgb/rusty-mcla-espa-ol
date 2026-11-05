@@ -34,5 +34,9 @@ pausa. Por eso quedan pendientes:
    supresiones y avisos de trucos en los hitos correspondientes.
 
 [Contrato, implementación, pruebas y límites](localization-audit/first-collectable-tutorial.md).
+La [investigación de fidelidad desde `188dc57`](localization-audit/form94-fidelity-investigation.md)
+separa script, clase nativa y Flash; documenta los recursos y funciones exactos
+que faltan. Botón, pausa, animación efectiva y resultado numérico siguen sin
+demostrarse. `is_shown()` del port no sustituye `Form_GetFormVisible`.
 La tarea sigue abierta. Se conservan las 120 entradas, Henry, la transición inicial,
 recursos y partidas. No se publica un ejecutable.
