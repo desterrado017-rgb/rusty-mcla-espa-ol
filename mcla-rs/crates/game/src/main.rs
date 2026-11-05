@@ -23,6 +23,7 @@ mod boomcam;
 mod camera;
 mod citymap;
 mod career;
+mod collectable_text;
 mod localization;
 mod port_text;
 mod catalog;
@@ -4963,8 +4964,8 @@ impl App {
                     self.game.collected.push(i as u16);
                     self.props_dirty = true;
                     self.fx.sparks(b + Vec3::Y * 0.6, Vec3::Y, 40);
-                    let msg = self.game.career.strings.get("COLLECTABLE_FOUND_MSG").map(|s| s.to_string()).unwrap_or_else(|| "COLLECTABLE FOUND".to_string());
-                    self.game.show_message(&format!("{}   {} / {}", msg.to_uppercase(), self.game.collected.len(), self.barrels.len()));
+                    let msg = collectable_text::found_message(&self.game.career.strings, self.game.collected.len(), self.barrels.len());
+                    self.game.show_message(&msg.to_uppercase());
                     if let Some(a) = self.audio.as_mut() {
                         // (MiscTasks/Collectables @0x7e3: AudioManager_PlayFrontendSound)
                         if !a.obj("COLLECTIBLES_PICKUP_MASTER") {
