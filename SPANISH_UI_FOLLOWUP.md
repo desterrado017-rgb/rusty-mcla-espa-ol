@@ -29,6 +29,13 @@ de prueba son centinelas, no traducciones atribuidas a Rockstar.
 
 Detalles y evidencia: [collectables.md](localization-audit/collectables.md).
 
+El tutorial original de la **primera** recogida es una tarea distinta y sigue
+pendiente. Se ha registrado como `COLLECTABLE-FIRST-TUTORIAL` en
+[PENDING_XBOX360_FIDELITY.md](PENDING_XBOX360_FIDELITY.md), con investigación del
+formulario 94, condiciones de persistencia y matriz de pruebas de primera
+recogida, posteriores y carga. El formateador de progreso corregido no activa
+por sí solo ese panel.
+
 ## Película inicial: discontinuidad negra demostrada
 
 El usuario precisó que ocurre con **INTRO NORMAL**, solo durante la transición,
