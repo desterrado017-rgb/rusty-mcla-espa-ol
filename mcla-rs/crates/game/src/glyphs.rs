@@ -224,9 +224,56 @@ fn button_name_for(language: mcla_config::Language, device: Device, screen: Scre
 mod tests {
     use super::*;
 
+    #[test]
+    fn keyboard_labels_follow_language_while_key_tokens_stay_unchanged() {
+        use mcla_config::Language::{English, Spanish};
 
+        for (screen, icon, token, spanish) in [
+            (Screen::Photo, 15, "MOUSE", "RATÓN"),
+            (Screen::Menu, 19, "ARROWS", "FLECHAS"),
+            (Screen::Menu, 7, "LEFT/RIGHT", "IZQ./DER."),
+            (Screen::Map, 7, "PGUP/PGDN", "REPÁG/AVPÁG"),
+            (Screen::Replay, 10, "BKSP", "RETROCESO"),
+        ] {
+            assert_eq!(key_name_on(icon, screen), Some(token));
+            assert_eq!(prompt_for(English, Device::Keyboard, screen, "ACTION", icon), (format!("ACTION [{token}]"), 0));
+            assert_eq!(prompt_for(Spanish, Device::Keyboard, screen, "ACCIÓN", icon), (format!("ACCIÓN [{spanish}]"), 0));
+            assert_eq!(key_caps_for(English, Device::Keyboard, screen, &[("btn", icon), ("unknown", 999)]), vec![("btn".into(), format!("[{token}]"), 0xffff_ffff)]);
+            assert_eq!(key_caps_for(Spanish, Device::Keyboard, screen, &[("btn", icon), ("unknown", 999)]), vec![("btn".into(), format!("[{spanish}]"), 0xffff_ffff)]);
+            assert_eq!(button_name_for(English, Device::Keyboard, screen, icon), token);
+            assert_eq!(button_name_for(Spanish, Device::Keyboard, screen, icon), spanish);
+        }
+        let (marked, icon) = with_key("MOUSE", ("MIRAR".into(), 1));
+        assert_eq!(prompt_for(Spanish, Device::Keyboard, Screen::Photo, &marked, icon), ("MIRAR [RATÓN]".into(), 0));
+        // A reassigned GPS key uses the same display adapter as the phone,
+        // without changing GPS_KEY or any keybinding global in this test.
+        let (marked, icon) = with_key("SPACE", ("MAPA".into(), 10));
+        assert_eq!(prompt_for(English, Device::Keyboard, Screen::Map, &marked, icon), ("MAPA [SPACE]".into(), 0));
+        assert_eq!(prompt_for(Spanish, Device::Keyboard, Screen::Map, &marked, icon), ("MAPA [ESPACIO]".into(), 0));
+        let (marked, icon) = with_key("F13", ("ACCIÓN".into(), 1));
+        assert_eq!(prompt_for(Spanish, Device::Keyboard, Screen::Menu, &marked, icon), ("ACCIÓN [F13]".into(), 0));
+        assert_eq!(prompt_for(Spanish, Device::Keyboard, Screen::Menu, "COCHE", 25), ("COCHE".into(), 25));
+        assert_eq!(button_name_for(Spanish, Device::Keyboard, Screen::Menu, 25), "");
+    }
 
+    #[test]
+    fn localized_keyboard_labels_preserve_pad_prompts_and_button_names() {
+        use mcla_config::Language::{English, Spanish};
 
+        let (marked, icon) = with_key("MOUSE", ("MIRAR".into(), 1));
+        for language in [English, Spanish] {
+            for device in [Device::Xbox, Device::PlayStation] {
+                assert_eq!(prompt_for(language, device, Screen::Photo, &marked, icon), ("MIRAR".into(), 1));
+                assert_eq!(prompt_for(language, device, Screen::Menu, "ACCEPT", 1), ("ACCEPT".into(), 1));
+                assert!(key_caps_for(language, device, Screen::Photo, &[("btn", 15)]).is_empty());
+                assert_eq!(button_name_for(language, device, Screen::Menu, 9), "START");
+            }
+            assert_eq!(button_name_for(language, Device::Xbox, Screen::Menu, 1), "A");
+            assert_eq!(button_name_for(language, Device::PlayStation, Screen::Menu, 1), "CROSS");
+            assert_eq!(button_name_for(language, Device::Xbox, Screen::Menu, 10), "BACK");
+            assert_eq!(button_name_for(language, Device::PlayStation, Screen::Menu, 10), "SELECT");
+        }
+    }
 
     #[test]
     fn prompts_follow_the_device() {

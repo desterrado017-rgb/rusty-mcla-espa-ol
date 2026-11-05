@@ -1,0 +1,480 @@
+{
+  "base": "b68c4d02d384f611d176170bb893053a697503af",
+  "files": [
+    {
+      "file": ".github/workflows/build-spanish-windows.yml",
+      "sha256": "9d3c12c1e0897f344f9173087bd026c8e892135ef03bc29e0c9d6399f20e854d",
+      "identical_to_base": true
+    },
+    {
+      "file": ".github/workflows/ci.yml",
+      "sha256": "e4978fc3224ae95182377ccc2d6e2d06cd16ee972a50b0d31c2a5c2a52f1d14c",
+      "identical_to_base": true
+    },
+    {
+      "file": ".github/workflows/release.yml",
+      "sha256": "de1c6673618ba35702d82493293b359296d939613e55cf148b78466fa9fbcf00",
+      "identical_to_base": true
+    },
+    {
+      "file": "launcher/Cargo.lock",
+      "sha256": "610dac76cd1628bfa7d9322f3acca35e499e3bda0af17b08c83e0e4e43a7719d",
+      "identical_to_base": true
+    },
+    {
+      "file": "launcher/Cargo.toml",
+      "sha256": "29baece71698fe3af51aebd6e9f5da25857d348d336e184f7d28f937b7abec92",
+      "identical_to_base": true
+    },
+    {
+      "file": "launcher/support/Cargo.toml",
+      "sha256": "e1488aba6d6fa63050778daa00643c2e87960f7e9e1c4d4290696079f5875583",
+      "identical_to_base": true
+    },
+    {
+      "file": "launcher/updater/Cargo.toml",
+      "sha256": "4642d266c8ca16f2f28a923d3a1217662167e354aba3396905f42667e1ae0cb9",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/Cargo.lock",
+      "sha256": "fd98c6170159f2ec63e2623f78033ca0ca6a4cebf8fec6fa26f7577e6461f2bf",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/Cargo.toml",
+      "sha256": "39d840dba94dec489193d3727f6fe68de99db2771a46d4e3abed0f06e0c91ad3",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/Cargo.toml",
+      "sha256": "b989735e048e8a019cbfa62efa8d8ece4a0eb48123db52bd672fb36b84d9af24",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/keybinds.rs",
+      "sha256": "67e4ee26478782bad41e6b37f7fc150adef3098b6657bc26894a843ae2d03be8",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/keybinds/save.rs",
+      "sha256": "0e76d5fc1f8e69b998c798c1759b974ad23a3574f1f5b22e34ffcd42fe47bfde",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/lib.rs",
+      "sha256": "285d19b49a80c854a74a7c820889a5186c2762880aa96091c879bdf6a13b721b",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/paths.rs",
+      "sha256": "127b2fc71dbbf9f4a653f78dbdb4de0797b7eac339463184fbeb2205788c6583",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/schema.rs",
+      "sha256": "43ee600f0d22ad86a9cee2b90548329ee0794f3e3794d5a278ef6fc685a4f639",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/config/src/tests.rs",
+      "sha256": "1467c0421378085c7976cb0700486cca34ec347d29b0457062547f3308e5e54a",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/flash/Cargo.toml",
+      "sha256": "823873bdc65ebdb4584bb5a4c6c4fa62921ee14fb9e1a88f051a51d8e958bdc3",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/Cargo.toml",
+      "sha256": "977b7312b4782cf4852385338e4afef97e64c12ec8fd4793a5859214a510b3c3",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/car_shader_dump.rs",
+      "sha256": "6e6eb5dc7bd5c5890c6857502c7f7d183b04d66d3b1e39a903f1f9fa4af2c122",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/glass_winding.rs",
+      "sha256": "0748001f29bde7cd596296606ceb29c463878d9f7486f7f70b7381e5fd9034de",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/tangent_stats.rs",
+      "sha256": "425cb78dcc55ea0628245fca9dce294a0b3ea2af8b8d16cb172ddb9ad6ed245f",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/tc_texlist.rs",
+      "sha256": "7f9dc2e84c850d2467afea6413c5b7dfc92d6233dc5082231959a36edf63a81b",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/tex_dump.rs",
+      "sha256": "09888484bad72c42db7ce1618c3b0322fc2d7cb31db13a150c3e49975d3ff18f",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/examples/water_dump.rs",
+      "sha256": "7ed42e1889889075dfad848b1b3e219140dfccb56941dc3f7db57d4117f84541",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/audcfg.rs",
+      "sha256": "c8ad8b4722e3b5cf9865475e64ba7eb42ac6914df18c006316c7f0ed1c577489",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/avm1.rs",
+      "sha256": "c8fbaf6d63e30d4d7abfc3eab9c6dcfecd55f841189e81fb49755d6f4060eca3",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/crypto.rs",
+      "sha256": "d673b652c072280478307f8a9d70be2e9e9a6154e050508977366f3df6d82285",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/dds.rs",
+      "sha256": "13d96e4cf15cb4ffc6d55c2853bb6c13a20fea7089533dcbcc70c772cd8f062e",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/fixtures/curve2_cases.txt",
+      "sha256": "26e835d4169f3850bdaa8ba4ad1e2c3054d25f4de4152600a398ae85b22d2cda",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/fixtures/curve3_cases.txt",
+      "sha256": "d4486b18e1d0c75c37ee50ce6f7c0b5894c33245a64b4258950eab88e3d7145a",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/fixtures/curve3_log2_cases.txt",
+      "sha256": "5bdab0ce9844204f184b792499b0df3a83d5df8f67534c0410badfab7e9b36f9",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/hash.rs",
+      "sha256": "8b00bab40f971268febf9b80ba6574f50a96c0a1b95c3e0cc9e6f567b30de171",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/iso.rs",
+      "sha256": "9b83098a1a6cd02ae42978e3de685ab9d4bac37bc07aaad566da4e246236c31d",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/jpeg.rs",
+      "sha256": "a3b2f721ce6e3ccf9150ae7b2f3b71a5e6a5977bec0eec6d5dc90dc64157a7af",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/keys.rs",
+      "sha256": "2c1d32ab3df747f2db8b11cdbf8b7cc91852a3757223a2983fae8c4bd5f3e5db",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/lib.rs",
+      "sha256": "12833489664e0eb1d8830634c89bab82dc2d7f068fbae6275865037142440703",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/names.rs",
+      "sha256": "f5bea636fcc418797eac4bfb25f9e61947341886252923d4c28833b7374412a0",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/aitune.rs",
+      "sha256": "8f9f9bf578f4cc4a286ff5af222b15eb8f214ae50baa316e19741ea5586fd0ee",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/anim.rs",
+      "sha256": "3c0a8a78748ae2bc309bbe0cabf808ae6fe35e2f738c34adcacdfe6bba0ad053",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/aomap.rs",
+      "sha256": "d5c01d9896dfbc653e4b3fe4e87fbc4bfd110cddef6df1e44dd500f979ccb0e5",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/blendshape.rs",
+      "sha256": "8e0a66def4ab7001e2bfa875c76a1a839efef179cd91a9b303de431a5e5068a4",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/bound.rs",
+      "sha256": "02e7adbd49cc7863123d6597a1cd28b4bc7dfc879fa1c9f4e1f0bd1f20820c99",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/character.rs",
+      "sha256": "179e0fa87c0cfef092eec5b8b9044c273b084400dcac832b354d1be0347f909a",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/drawable.rs",
+      "sha256": "7580e2711710126c1696484cff1cc2b444d8f9f77601e7a2a9a566c766eba355",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/fragphys.rs",
+      "sha256": "79bca9b52f38a5cdbebc3ab592594231c137c5c6a3ca51f3313357009f75e6c2",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/geometry.rs",
+      "sha256": "e21f3d266d6bf55a76a135a04d0fe6ff186f5f03fb35d486c7f8a3883e6681cd",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/lights.rs",
+      "sha256": "9dca4f00e26a4c7f2972353d916547e20d917f40b27d5a6ccbc8222b6ffaa961",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/mod.rs",
+      "sha256": "f6da9f1efcbfccf7a3c632caa30df1b14e8e6292140ad7e37a77e0502c95d36b",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/navmesh.rs",
+      "sha256": "fd0864f62df4887f2a7ebd0cd8a8f9a4242b2cef1d930e3d42c6f3892740b3c2",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/navsys.rs",
+      "sha256": "5cd497da5725219c8bc4c699ad2f2ce2d894f2e89394a38cd13e32aef7d4814b",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/parking.rs",
+      "sha256": "a5cf70ab562dd40371351e83252a7429e513911e0b09ccfd5d6b5496258926c2",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/props.rs",
+      "sha256": "1852bf4a28ee20c3f8d25b5d3f44868ad654332b0b370c8cafd36438a397da52",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/ptfx.rs",
+      "sha256": "4a533be47d94fa1966c2bf0552c643922e9e782cadc2d7278dd2d3bca5198bda",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/ptfx_original_tests.rs",
+      "sha256": "c4840355e31c874354c1d07d1dde2218057621606b5094889cde732d76ca8e62",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/ragdoll.rs",
+      "sha256": "04ca2f5871530699aa00e85e094bb38b4aa17026faa25d826fa10dc7ac92a71f",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/scan.rs",
+      "sha256": "a6798caacd297a320b57af46597699a3c4c8e03be7071f8982fefab478d17ebc",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/sector.rs",
+      "sha256": "0cd1fc5be54e5b6796feac751b5d417d941d7bb8a54122a37815da2e4117751e",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/simtune.rs",
+      "sha256": "db1cb8a3a1aa14bdcefc2f46c1e8c59d158b4abd29e67beb067e3e97003117fd",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/simtune_blend_cases.txt",
+      "sha256": "f2138c2a5cab490e5198baf3fedcdb0b1a13e64dec08263ea8ec6984b1f9e1a8",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/simtune_gyro_blend_cases.txt",
+      "sha256": "8490662445eea877011293decd206d1cc84fef64a922012564c4d9d72339c844",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/simtune_input_blend_cases.txt",
+      "sha256": "02021ea84f7b2ad5c9c8aa50506ac904c75ad6f1c87d3f2bdd572bdbba256c34",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/skeleton.rs",
+      "sha256": "22ed93758d1a4297a3145793337bad6d77c79647dd62947049bd9cc0253402ca",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/swf.rs",
+      "sha256": "04d6aab76a694ad186c73b0b79c5c92c5a51b193ad3cdf10335ad1fa5b77f8d2",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/testdata/aogrid_object_ref.txt",
+      "sha256": "3b4bc2a9144d00ea11978660c0b459a9b10a04547f6fe9ae35248bf4b8ab39c9",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/testdata/map_aomap_ref.txt",
+      "sha256": "9b156ea05288c9a8ba390d65a8b881b48f79aeab43f22473b6e0449889d4d8d0",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/testdata/map_keyframe_ref.txt",
+      "sha256": "f50509d8aab92697763a3e56113ebbe01112dda8ec58e70819973b956055d287",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/testdata/nav_sidewalk_ref.txt",
+      "sha256": "ac7b6440ff715c484ca9373244679bf7677682abb2012a1b63b3ff470909577c",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/testdata/ptfx_evolve_ref.txt",
+      "sha256": "8338dcb5229a19108931f9b4b6acebd8d48fe36b8670d1183341b90732c1dcfb",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/texture.rs",
+      "sha256": "aa7e2afbd01a7d5cf0c64ab8ae8cecca63b26ca0e246cf85443c2dd70538aac9",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/ui.rs",
+      "sha256": "227f710b172fc07446776845efe4824473ea4c039ab1890f0b8847a3a09328a7",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/vehtune.rs",
+      "sha256": "bd9093762c916efb2c675b305b69a93a80d5a3864f2a6ffa524fa87d5393a4d6",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rage/xenos.rs",
+      "sha256": "9cb2beb8e0f506541848be336a53d79f0c8c9472f1043f24c1ff420ddde864c0",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rpf3.rs",
+      "sha256": "a07a6d7c2a6d42d62078946ad4d9e812ce9fb4ceea870e4c88f7042bacf69f2a",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/rsc.rs",
+      "sha256": "fdf014101c045037e24c798c5f5fe946b09b29ea873a27c6e744040c7dfd34b2",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/sco.rs",
+      "sha256": "c304bee1fa456634fe89a72272d6ed500866550d89299d800a3826b46f364430",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/strtbl.rs",
+      "sha256": "ab9a606cee4c33c4a1812ab3d97e50ce8b550565eb6936bfbb10e072c87f9e0d",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/testdata/audio_container_ref.txt",
+      "sha256": "dd9180040aa20f9a61afe0d338de1ef6802e6544cf30b746cdd8acd3b0c447b7",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/xex.rs",
+      "sha256": "ab37ae470142792f124f101b901af1d0d591de1ef099696aa85b9869456cacc0",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/formats/src/xmem.rs",
+      "sha256": "ece5f843bc83d7eb52d1a7e9efc59d7d8ee062eb8ddb5482883aa9c91eb832bf",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/Cargo.toml",
+      "sha256": "46dffb7dfef76dffdc9c5d7ac71e6fb7b716b527d99ae4cb9084d774a2d4c428",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/ai.rs",
+      "sha256": "68f03b5cdf6cf3a0d97f4cae10787599b370b09665ce8202e63862b1551d9196",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/boot.rs",
+      "sha256": "c6182cb1724cc94adb8929c78fed7ae8be405d13bebb1e131e4f62dcf03ba4aa",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/career.rs",
+      "sha256": "898e184f3990602d76b5f4db676c53e64b54fc6b78cc6d28e511824427e20d07",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/cutscene.rs",
+      "sha256": "86720b594201c90688f3fab02279b185862d5a5978ea1c4b0c2e464e7712b81c",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/localization.rs",
+      "sha256": "ef770ac32a491a979e951b6ab8e36742ca1223c79e684ca590bf061007bd76e5",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/offroad.rs",
+      "sha256": "b868b3634fe251c0cc4e8857d39fa5e2276ec8363f66c65b1bf21fb535d25b18",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/rival_diag.rs",
+      "sha256": "36414992b3fd97b95f87d24b063b71b88df26f50c38a46d32813e8996029eb75",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/roamers.rs",
+      "sha256": "22466029d223d2006ab6ef0fda7789530dab78d89531a15fd09539e8423649b6",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/vehicles.rs",
+      "sha256": "e167ff47139122ca2ff6d8b704c79dbdc83c18085a5527bf3a96d74e4e76752b",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/game/src/world.rs",
+      "sha256": "189407993cd69dc118073d58582e96d0837e8e74f133bbca8db8a90837ee32a1",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/install/Cargo.toml",
+      "sha256": "0e8fe5a756f40cf3d6fcefe7567ce5e8796ae4e20c322e87bcd603e654405968",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/mods/Cargo.toml",
+      "sha256": "a1ea1a2cc2afa01a9f46bb84ea13d4317cbda55fb3bc561953b4a8b3134648bc",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/savedecode/Cargo.toml",
+      "sha256": "83a39e5b86071562ffa0a41791c9c54b50bd9dca35f9e3fa7ffa15f84372cda7",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/shaders/Cargo.toml",
+      "sha256": "960a1e632341f2a574a40ded9763f2ccc4ec88ca448d67f18f3e365cce1f3c84",
+      "identical_to_base": true
+    },
+    {
+      "file": "mcla-rs/crates/tool/Cargo.toml",
+      "sha256": "9ec169347f3de894bc228591add61a31bcd9a58e0159594ce893cc4c1d8884c4",
+      "identical_to_base": true
+    }
+  ]
+}

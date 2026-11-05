@@ -14243,13 +14243,157 @@ mod tests {
     }
 
     /// Synthetic values prove resource selection; they are not purported Xbox translations.
+    fn controller_presentation_strings() -> mcla_formats::strtbl::StringTable {
+        use mcla_formats::{hash::joaat, strtbl::StringTable};
+        let keys = [
+            "controller", "prompt_back", "prompt_accept", "customcontrol_column_action", "mapping_recommended",
+            "controller_custom_prompt_change", "controller_custom_prompt_delete", "prompt_defaults",
+            "Steering_Wheel", "Steering_Wheel_Manual", "Custom_Steering_Wheel", "Navmap_GPSMap", "pause_go_to_garage",
+        ].into_iter().chain(crate::keybinds::ACTS.iter().map(|a| a.name)).collect::<Vec<_>>();
+        StringTable {
+            keys: keys.iter().map(|k| k.to_string()).collect(),
+            langs: ["EN_RESOURCE", "ES_RESOURCE"].into_iter().map(|prefix| keys.iter().map(|key| (joaat(key), format!("{prefix}_{}", key.to_uppercase()))).collect()).collect(),
+            lang: 0,
+        }
+    }
 
+    #[test]
+    fn controller_pages_present_both_languages_without_changing_bindings() {
+        use crate::keybinds as kb;
+        use mcla_config::Language::{English, Spanish};
+        let mut g = crate::game::Game::new(Vec::new(), 0);
+        g.career.strings = controller_presentation_strings();
+        g.mc4 = Some(Mc4::seeded(false));
+        g.opt_x.ctrl.open = true;
+        // A missing required binding must remain a required binding in both presentations.
+        g.opt_x.ctrl.kbd.work.keys[kb::GAS] = [None; 2];
+        let before_save = serde_json::to_value(g.mc4.as_ref().unwrap()).unwrap();
+        let before_bindings = (g.opt_x.ctrl.kbd.binds, g.opt_x.ctrl.kbd.work, g.opt_x.ctrl.work);
+        let row = |act, place| kb::rows().iter().position(|r| *r == (act, place)).unwrap();
+        let same_behavior = |en: &CtrlPage, es: &CtrlPage| {
+            assert_eq!((en.rows.len(), en.headers.len(), en.prompts.len()), (es.rows.len(), es.headers.len(), es.prompts.len()));
+            assert_eq!(en.props, es.props);
+            assert_eq!(en.rows.iter().map(|r| r.2).collect::<Vec<_>>(), es.rows.iter().map(|r| r.2).collect::<Vec<_>>());
+            assert_eq!(en.prompts.iter().map(|p| p.1).collect::<Vec<_>>(), es.prompts.iter().map(|p| p.1).collect::<Vec<_>>());
+        };
+        for (page, polling) in [(PAGE_CONTROLLER, false), (PAGE_KEYBOARD, false), (PAGE_KEYBOARD, true), (PAGE_WHEEL, false)] {
+            g.pause_page = page;
+            g.opt_x.ctrl.kbd.polling = polling;
+            g.menu_sel = row(kb::HORN, 0);
+            g.career.strings.set_lang(0);
+            let en = g.mc4_ctrl_page_in(English);
+            g.career.strings.set_lang(1);
+            let es = g.mc4_ctrl_page_in(Spanish);
+            same_behavior(&en, &es);
+            match page {
+                PAGE_CONTROLLER => {
+                    assert_eq!((en.title.as_str(), es.title.as_str()), ("EN_RESOURCE_CONTROLLER", "ES_RESOURCE_CONTROLLER"));
+                    assert_eq!(en.rows.iter().map(|r| r.0.as_str()).collect::<Vec<_>>(), ["GAMEPAD", "KEYBOARD", "RACING WHEEL"]);
+                    assert_eq!(es.rows.iter().map(|r| r.0.as_str()).collect::<Vec<_>>(), ["MANDO", "TECLADO", "VOLANTE"]);
+                    assert_eq!(en.rows.iter().map(|r| &r.1).collect::<Vec<_>>(), es.rows.iter().map(|r| &r.1).collect::<Vec<_>>());
+                    assert_eq!(en.prompts.iter().map(|p| p.1).collect::<Vec<_>>(), [crate::flash_ui::ICON_A, crate::flash_ui::ICON_B]);
+                }
+                PAGE_KEYBOARD => {
+                    assert_eq!((en.title.as_str(), es.title.as_str()), ("KEYBOARD CONTROLS", "CONTROLES DEL TECLADO"));
+                    assert_eq!(en.headers, ["EN_RESOURCE_CUSTOMCONTROL_COLUMN_ACTION", "KEY"]);
+                    assert_eq!(es.headers, ["ES_RESOURCE_CUSTOMCONTROL_COLUMN_ACTION", "TECLA"]);
+                    assert!(en.rows[row(kb::GAS, 1)].0.ends_with(" (2ND KEY)"));
+                    assert!(es.rows[row(kb::GAS, 1)].0.ends_with(" (TECLA 2)"));
+                    assert_eq!((en.rows[row(kb::GAS, 0)].1.as_str(), es.rows[row(kb::GAS, 0)].1.as_str()), ("EN_RESOURCE_MAPPING_RECOMMENDED", "ES_RESOURCE_MAPPING_RECOMMENDED"));
+                    assert_eq!(en.props[row(kb::GAS, 0)], 20);
+                    // Only descriptive display labels change; the physical key bindings do not.
+                    for (i, (act, place)) in kb::rows().into_iter().enumerate() {
+                        if !(place == 0 && g.opt_x.ctrl.kbd.work.must(act)) {
+                            assert_eq!(crate::port_text::key_label(Spanish, &en.rows[i].1), es.rows[i].1);
+                        }
+                    }
+                    if polling {
+                        assert_eq!(en.prompts, [("PRESS A KEY - ESC: CANCEL".to_string(), 0)]);
+                        assert_eq!(es.prompts, [("PULSA UNA TECLA - ESC: CANCELAR".to_string(), 0)]);
+                        assert!(es.rows[g.menu_sel].1.is_empty() && es.rows[g.menu_sel].2);
+                        assert_eq!(es.rows.iter().filter(|r| r.2).count(), 1);
+                    } else {
+                        assert_eq!(en.rows[row(kb::HORN, 0)].1, "H");
+                        assert_eq!(es.rows[row(kb::NITRO, 0)].1, "MAYÚS IZQ");
+                        assert_eq!(es.prompts[0], ("ENTER: ES_RESOURCE_CONTROLLER_CUSTOM_PROMPT_CHANGE".to_string(), 0));
+                        assert_eq!(es.prompts[1], ("ESC: ES_RESOURCE_PROMPT_BACK".to_string(), 0));
+                    }
+                }
+                PAGE_WHEEL => {
+                    assert_eq!((en.title.as_str(), es.title.as_str()), ("RACING WHEEL", "VOLANTE"));
+                    assert_eq!(es.rows[0].0, "ES_RESOURCE_STEERING_WHEEL");
+                    assert!(es.rows.iter().all(|r| !r.2 && r.1.is_empty()));
+                }
+                _ => unreachable!(),
+            }
+        }
+        assert_eq!(before_bindings, (g.opt_x.ctrl.kbd.binds, g.opt_x.ctrl.kbd.work, g.opt_x.ctrl.work));
+        assert_eq!(before_save, serde_json::to_value(g.mc4.as_ref().unwrap()).unwrap());
+    }
 
+    #[test]
+    fn keyboard_actions_keep_english_labels_and_select_original_spanish_resources() {
+        use crate::keybinds as kb;
+        use mcla_config::Language::{English, Spanish};
+        use mcla_formats::hash::joaat;
+        let mut g = crate::game::Game::new(Vec::new(), 0);
+        g.career.strings = controller_presentation_strings();
+        g.career.strings.set_lang(0);
+        for (act, def) in kb::ACTS.iter().enumerate().filter(|(_, def)| !def.shared) {
+            assert_eq!(g.keyboard_action_label(English, act), def.label);
+        }
+        g.career.strings.set_lang(1);
+        for (act, expected) in [
+            (kb::STEER_LEFT, "GIRAR A LA IZQUIERDA"), (kb::STEER_RIGHT, "GIRAR A LA DERECHA"),
+            (kb::ABILITY_NEXT, "SIGUIENTE HABILIDAD"), (kb::LEAN_BACK, "INCLINARSE HACIA ATRÁS"),
+            (kb::LEAN_FORWARD, "INCLINARSE HACIA ADELANTE"), (kb::RESET_CAR, "RESTABLECER VEHÍCULO"),
+        ] {
+            assert_eq!(g.keyboard_action_label(Spanish, act), expected);
+        }
+        for act in [kb::CAM_DOWN, kb::MUSIC_PAUSE, kb::PAUSE, kb::WHEEL_FRONT_LEFT, kb::WHEEL_FRONT_RIGHT, kb::WHEEL_BACK_LEFT, kb::WHEEL_BACK_RIGHT] {
+            assert_eq!(g.keyboard_action_label(Spanish, act), format!("ES_RESOURCE_{}", kb::ACTS[act].name));
+        }
+        assert_eq!(g.keyboard_action_label(Spanish, kb::GPS_MAP), "ES_RESOURCE_NAVMAP_GPSMAP");
+        assert_eq!(g.keyboard_action_label(Spanish, kb::GARAGE), "ES_RESOURCE_PAUSE_GO_TO_GARAGE");
+        g.career.strings.langs[1].remove(&joaat("CAM_DOWN"));
+        assert_eq!(g.keyboard_action_label(Spanish, kb::CAM_DOWN), "EN_RESOURCE_CAM_DOWN");
+        g.career.strings.langs[0].remove(&joaat("CAM_DOWN"));
+        assert_eq!(g.keyboard_action_label(Spanish, kb::CAM_DOWN), "PREVIOUS CAMERA");
+        assert_eq!(kb::ACTS[kb::GPS_MAP].name, "GPS_MAP");
+        assert_eq!(kb::ACTS[kb::GARAGE].name, "GARAGE");
+    }
 
-
-
-
-
+    #[test]
+    fn subtitle_preferences_survive_options_import_export_in_both_languages() {
+        assert!(!Options::default().subtitles);
+        let mut g = crate::game::Game::new(Vec::new(), 0);
+        assert!(!g.opts.subtitles);
+        g.career.strings = controller_presentation_strings();
+        for selected in [0, 1] {
+            g.career.strings.set_lang(selected);
+            for enabled in [false, true] {
+                let mut saved = Mc4::seeded(false);
+                saved.options.subtitles = enabled;
+                saved.options.language = 3;
+                saved.options.language_name = Some("german".to_string());
+                g.mc4 = Some(saved);
+                g.mc4_options_in();
+                assert_eq!(g.opts.subtitles, enabled);
+                let mut round_trip = g.mc4.take().unwrap();
+                let before = serde_json::to_value(&round_trip).unwrap();
+                g.mc4_options_out(&mut round_trip);
+                assert_eq!(serde_json::to_value(&round_trip).unwrap(), before);
+                assert_eq!(g.career.strings.lang, selected);
+                // The actual checkbox preference, including an explicit false, is written back.
+                g.opts.subtitles = !enabled;
+                g.mc4_options_out(&mut round_trip);
+                assert_eq!(round_trip.options.subtitles, !enabled);
+                let after = serde_json::to_value(&round_trip).unwrap();
+                assert_eq!(after["options"]["language"], before["options"]["language"]);
+                assert_eq!(after["options"]["language_name"], before["options"]["language_name"]);
+            }
+        }
+    }
 
     /// The disc's controller list and maps.
     #[test]

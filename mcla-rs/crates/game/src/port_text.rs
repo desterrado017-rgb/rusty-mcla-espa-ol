@@ -159,9 +159,91 @@ catalog! {
     GpuLogLocation, "Port error dialog; preserve {path} and the launcher's existing Export Logs button name.", "The game's log is in {path}. The launcher's Export Logs collects it.", "El registro del juego está en {path}. La opción Export Logs del lanzador lo recopila.";
 }
 
-
+#[cfg(test)]
+#[path = "port_text_tests.rs"]
+mod rendering_tests;
 
 /// The startup language. This does not read or change the language in a game save.
 pub fn current(key: Text) -> &'static str {
     text(crate::hooks::language(), key)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn placeholders(s: &str) -> Vec<&str> {
+        s.split('{').skip(1).map(|s| s.split_once('}').expect("closed placeholder").0).collect()
+    }
+
+    #[test]
+    fn both_languages_cover_the_catalog_and_keep_dynamic_fields() {
+        for &(key, _, _, _) in ENTRIES {
+            let (en, es) = (text(Language::English, key), text(Language::Spanish, key));
+            assert!(!en.is_empty() && !es.is_empty(), "{key:?}");
+            assert_eq!(placeholders(en), placeholders(es), "{key:?}");
+        }
+        assert_eq!(placeholders(text(Language::Spanish, Text::GpuLogLocation)), ["path"]);
+    }
+
+    #[test]
+    fn language_changes_port_labels_without_translating_technical_names() {
+        assert_eq!(text(Language::English, Text::Display), "DISPLAY");
+        assert_eq!(text(Language::Spanish, Text::Display), "PANTALLA");
+        assert_eq!(text(Language::English, Text::StickDeadZone), "STICK DEAD ZONE");
+        assert_eq!(text(Language::Spanish, Text::StickDeadZone), "ZONA MUERTA DEL STICK");
+        for language in [Language::English, Language::Spanish] {
+            assert!(text(language, Text::GpuRequirements).contains("Vulkan"));
+            assert!(text(language, Text::GpuRequirements).contains("DirectX 12"));
+            assert!(text(language, Text::GpuOpenGlOnly).contains("OpenGL"));
+            assert!(text(language, Text::GpuLogLocation).contains("Export Logs"));
+            assert!(text(language, Text::FpsFrameTime).starts_with("FPS + "));
+        }
+    }
+
+    #[test]
+    fn key_labels_only_change_presentation_and_preserve_all_saved_key_names() {
+        use mcla_config::keybinds as kb;
+        use std::collections::BTreeMap;
+        let keycaps = ENTRIES.iter().filter(|entry| entry.1.starts_with("Port keyboard keycap label")).collect::<Vec<_>>();
+        assert_eq!(keycaps.len(), 40);
+        for (index, def) in kb::KEYS.iter().enumerate() {
+            let key = kb::Key::at(index).unwrap();
+            let (code_before, name_before) = (key.code(), key.name());
+            assert_eq!(key_label(Language::English, def.name), def.name);
+            let _display_only = key_label(Language::Spanish, def.name);
+            assert_eq!((key.code(), key.name()), (code_before, name_before));
+            assert_eq!(kb::Key::from_code(def.code), Some(key));
+            assert_eq!(kb::Key::from_name(def.name), Some(key));
+            if let Some(entry) = keycaps.iter().find(|entry| entry.2 == def.name) {
+                assert_eq!(key_label(Language::Spanish, def.name), entry.3);
+            } else {
+                // Letters, digits, numpad digits and F-keys are already technical keycaps.
+                assert_eq!(key_label(Language::Spanish, def.name), def.name);
+            }
+            if key.bindable() {
+                let mut bindings = kb::Bindings::default();
+                assert!(bindings.assign(kb::HORN, 0, key));
+                let saved = bindings.to_save();
+                let json = serde_json::to_string(&saved).unwrap();
+                let decoded: Option<BTreeMap<String, Vec<String>>> = serde_json::from_str(&json).unwrap();
+                assert_eq!(kb::Bindings::from_save(decoded.as_ref()), bindings);
+                if let Some(saved) = decoded {
+                    assert_eq!(saved["HORN"][0], def.name);
+                }
+            }
+        }
+        assert_eq!(key_label(Language::Spanish, "LEFT SHIFT"), "MAYÚS IZQ");
+        assert_eq!(key_label(Language::Spanish, "PAGE UP"), "RE PÁG");
+        assert_eq!(key_label(Language::Spanish, "BACKSPACE"), "RETROCESO");
+        assert_eq!(key_label(Language::Spanish, "CTRL"), "CTRL");
+        assert_eq!(key_label(Language::Spanish, "ALT"), "ALT");
+        assert_eq!(key_label(Language::Spanish, "ENTER"), "ENTER");
+        assert_eq!(key_label(Language::Spanish, "ESC"), "ESC");
+        for token in ["MOUSE", "ARROWS", "LEFT/RIGHT", "PGUP/PGDN", "BKSP"] {
+            assert_eq!(key_label(Language::English, token), token);
+        }
+        let unknown = String::from("MOD_EXTRA_KEY");
+        assert_eq!(key_label(Language::Spanish, &unknown), unknown);
+    }
 }

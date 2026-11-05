@@ -1808,9 +1808,57 @@ pub fn race_time(ms: i32) -> String {
 mod tests {
     use super::*;
 
+    #[test]
+    fn hangout_money_label_uses_original_key_and_keeps_override_and_fallback() {
+        let key = mcla_formats::hash::joaat("G_Money");
+        let mut strings = StringTable::default();
+        // Sentinels only: no claimed translation or original resource content.
+        strings.langs = vec![HashMap::from_iter([(key, "EN_SYNTHETIC".into())]), HashMap::from_iter([(key, "ES_SYNTHETIC".into())])];
+        for (selected, expected) in [(0, "EN_SYNTHETIC"), (1, "ES_SYNTHETIC")] {
+            strings.set_lang(selected);
+            assert_eq!(hangout_bank_label(&strings, None), expected);
+            assert_eq!(hangout_bank_label(&strings, Some("DEBUG_OVERRIDE")), "DEBUG_OVERRIDE");
+        }
+        strings.langs[1].clear();
+        assert_eq!(hangout_bank_label(&strings, None), "EN_SYNTHETIC");
+        assert_eq!(hangout_bank_label(&StringTable::default(), None), "MONEY  ");
+    }
 
+    #[test]
+    fn fscommand_keeps_language_and_reads_selected_table_without_game_resources() {
+        use mcla_formats::rage::swf::{Cmd, Code, Frame, Sprite};
 
-
+        // Synthetic AVM1: ask for the language and then for a string. A movie's
+        // current value must not override the host's selected table language.
+        let mut code = Vec::new();
+        for request in [b"FSCommand:Getvar\0lang\0".as_slice(), b"FSCommand:Getstring\0\0".as_slice()] {
+            code.push(0x83); // GetURL
+            code.extend((request.len() as u16).to_le_bytes());
+            code.extend(request);
+        }
+        code.extend([0x07, 0x00]); // Stop, End
+        let movie = Arc::new(Movie {
+            stage: [0.0, 1280.0, 0.0, 720.0],
+            fps: 30,
+            root: Sprite { frames: vec![Frame { tag: 0, cmds: vec![Cmd::DoAction(Code::from(code))] }] },
+            chars: Vec::new(),
+            exports: Vec::new(),
+        });
+        for (selected, expected) in [(0, "EN_SYNTHETIC"), (1, "ES_SYNTHETIC")] {
+            let key = mcla_formats::hash::joaat("synthetic_key");
+            let mut strings = StringTable::default();
+            strings.langs = vec![HashMap::from_iter([(key, "EN_SYNTHETIC".into())]), HashMap::from_iter([(key, "ES_SYNTHETIC".into())])];
+            strings.set_lang(selected);
+            let mut player = Player::new(movie.clone());
+            player.set_global("lang", Value::Int(2));
+            player.set_global("fs_stringID", Value::str("synthetic_key"));
+            let logic = crate::menu3d::UiLogic::default();
+            player.fscommand = Some(Box::new(move |p, command, argument| fscommand(p, command, argument, &strings, &logic)));
+            player.tick();
+            assert_eq!(player.get_global("lang").map(|v| v.to_i32()), Some(selected as i32));
+            assert_eq!(player.get_global("t_stringID").map(|v| v.to_string().to_string()).as_deref(), Some(expected));
+        }
+    }
 
     /// The splash rings (F-71442, F-92234, F-60177): five per slot with the one on show, a sixth dropped,
     /// the first posted when queued, the next when the movie clears `SplashVisibles`.

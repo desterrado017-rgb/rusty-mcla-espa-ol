@@ -1752,7 +1752,37 @@ mod tests {
         code.extend(i.to_le_bytes());
     }
 
+    #[test]
+    fn getvar_lang_preserves_the_hosts_selected_language() {
+        use mcla_formats::rage::swf::Frame;
 
+        // A synthetic movie asks the real FSCommand callback for `lang`, then
+        // reads its response through AVM1. No game resource or text is copied.
+        let mut code = Vec::new();
+        let request = b"FSCommand:Getvar\0lang\0";
+        code.push(0x83); // GetURL
+        code.extend((request.len() as u16).to_le_bytes());
+        code.extend(request);
+        push_str(&mut code, "observed_lang");
+        push_str(&mut code, "_global");
+        code.push(0x1c); // GetVariable
+        push_str(&mut code, "lang");
+        code.extend([0x4e, 0x1d, 0x07, 0x00]); // GetMember, SetVariable, Stop, End
+        let movie = Arc::new(Movie {
+            root: Sprite { frames: vec![Frame { tag: 0, cmds: vec![Cmd::DoAction(Code::from(code))] }] },
+            ..(*empty_movie()).clone()
+        });
+        for (selected, expected) in [(None, 0), (Some(0), 0), (Some(1), 1)] {
+            let mut p = Player::new(movie.clone());
+            if let Some(language) = selected {
+                p.set_global("lang", Value::Int(language));
+            }
+            p.fscommand = Some(Box::new(|p, command, argument| assert!(common_fscommand(p, command, argument))));
+            p.tick();
+            assert_eq!(p.get_global("lang").map(|v| v.to_i32()), Some(expected));
+            assert_eq!(p.get_member(Ref::Inst(p.root), &Value::str("observed_lang")).map(|v| v.to_i32()), Some(expected));
+        }
+    }
 
     /// r = StringExtract(s, index, count) run by the interpreter
     fn extract(s: &str, index: i32, count: i32) -> String {

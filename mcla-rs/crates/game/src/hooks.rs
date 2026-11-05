@@ -1451,11 +1451,70 @@ mod tests {
         assert!(title.contains("driver") && text.contains("RTX (vulkan)"));
     }
 
+    #[test]
+    fn spanish_gpu_error_preserves_driver_details_and_log_path() {
+        let logs = Path::new("C:/Usuario/José/logs");
+        let (title, text) = gpu_failure_text(mcla_config::Language::Spanish, Some(("GPU 0x1234", wgpu::Backend::Vulkan)), "device request {technical_id}: ERROR_42", logs);
+        assert!(title.contains("controlador gráfico"));
+        assert!(text.contains("Gráficos: GPU 0x1234 (vulkan)"));
+        assert!(text.contains("Detalles: device request {technical_id}: ERROR_42"));
+        assert!(text.contains("C:/Usuario/José/logs") && text.contains("Export Logs"));
+        assert!(!text.contains("{path}"));
+        let (_, text) = gpu_failure_text(mcla_config::Language::Spanish, None, "raw adapter error", logs);
+        assert!(text.contains("Vulkan o DirectX 12") && text.contains("raw adapter error"));
+    }
 
+    #[test]
+    fn port_option_values_follow_language_without_changing_config_words() {
+        use mcla_config::Language::{English, Spanish};
+        let mut d = Settings::default().display;
+        let mut g = Settings::default().game;
+        d.window_mode = WindowMode::Borderless;
+        d.vsync = false;
+        d.fps_monitor = FpsMonitor::FrameTime;
+        let value = |language, row| display_value_for(language, row, &d, &g, &[]);
+        assert_eq!(value(English, ROW_WINDOW_MODE), "BORDERLESS");
+        assert_eq!(value(Spanish, ROW_WINDOW_MODE), "SIN BORDES");
+        assert_eq!(value(English, ROW_VSYNC), "OFF");
+        assert_eq!(value(Spanish, ROW_VSYNC), "DESACTIVADO");
+        assert_eq!(value(English, ROW_FPS_MONITOR), "FPS + FRAME TIME");
+        assert_eq!(value(Spanish, ROW_FPS_MONITOR), "FPS + TIEMPO POR FOTOGRAMA");
+        assert_eq!(d.window_mode.word(), "borderless");
+        assert_eq!(d.fps_monitor.word(), "frame_time");
 
+        d.aa = mcla_config::Aa::X4;
+        d.texture_filtering = mcla_config::TexFilter::X16;
+        d.render_scale = 1.5;
+        d.fps_cap = 144;
+        g.shadow_resolution = mcla_config::ShadowRes::X4;
+        g.draw_distance = mcla_config::Scale::X1_5;
+        g.detail_level = mcla_config::Scale::X3;
+        for language in [English, Spanish] {
+            for (row, expected) in [(ROW_AA, "4X"), (ROW_TEX_FILTER, "16X"), (ROW_RENDER_SCALE, "150%"), (ROW_FPS_CAP, "144"), (ROW_SHADOW_RES, "4X"), (ROW_DRAW_DISTANCE, "1.5X"), (ROW_DETAIL_LEVEL, "3X")] {
+                assert_eq!(display_value_for(language, row, &d, &g, &[]), expected);
+            }
+            let monitors = vec![(r"\\.\DISPLAY1".to_string(), (1920, 1080), Vec::new())];
+            d.monitor = 0;
+            assert_eq!(display_value_for(language, ROW_MONITOR, &d, &g, &monitors), "1  DISPLAY1 (1920 X 1080)");
+            assert_eq!(stick_dead_value_for(language, 15), "15%");
+            assert_eq!(fps_lines(FpsMonitor::FrameTime, 59.6, 16.78), vec![("60".to_string(), "FPS"), ("16.8".to_string(), "MS")]);
+        }
+        assert_eq!(g.draw_distance.word(), "1.5x");
+        assert_eq!(g.detail_level.word(), "3x");
+    }
 
-
-
+    #[test]
+    fn intro_notice_and_disabled_dead_zone_use_the_selected_language() {
+        use mcla_config::Language::{English, Spanish};
+        assert_eq!(intro_value_for(English, Intro::Fast, Intro::Normal), "FAST (NEXT START)");
+        assert_eq!(intro_value_for(Spanish, Intro::Fast, Intro::Normal), "RÁPIDA (PRÓXIMO INICIO)");
+        assert_eq!(intro_value_for(Spanish, Intro::Normal, Intro::Normal), "NORMAL");
+        assert_eq!(intro_value_for(Spanish, Intro::Skip, Intro::Skip), "DESACTIVADO");
+        assert_eq!(stick_dead_value_for(English, 0), "OFF");
+        assert_eq!(stick_dead_value_for(Spanish, 0), "DESACTIVADO");
+        assert_eq!(Intro::Fast.word(), "fast");
+        assert_eq!(Intro::Skip.word(), "skip");
+    }
 
     fn tmp(name: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!("mcla-hooks-test-{}-{name}", std::process::id()));

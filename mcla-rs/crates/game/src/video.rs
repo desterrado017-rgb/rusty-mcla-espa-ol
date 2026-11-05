@@ -131,3 +131,35 @@ fn select_subtitle(subs: &[(f32, f32, String)], t: f32, enabled: bool) -> Option
     }
     subs.iter().find(|s| t >= s.0 && t < s.1).map(|s| s.2.as_str())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::select_subtitle;
+
+    #[test]
+    fn movie_subtitles_respect_the_option_without_changing_the_track() {
+        // Synthetic sentinels: no dialogue or translation from the game is embedded here.
+        for text in ["EN_SENTINEL <MARKER>%s", "ES_SENTINEL áéíóúñ ¿? <MARKER>%s"] {
+            let subs = vec![(1.0, 2.0, text.to_string()), (3.0, 4.0, "NEXT_SENTINEL".to_string())];
+            let before = subs.clone();
+            for t in [1.0, 1.5, 1.999] {
+                assert_eq!(select_subtitle(&subs, t, false), None);
+                assert_eq!(select_subtitle(&subs, t, true), Some(text));
+            }
+            assert_eq!(select_subtitle(&subs, 3.0, false), None);
+            assert_eq!(select_subtitle(&subs, 3.0, true), Some("NEXT_SENTINEL"));
+            assert_eq!(subs, before);
+        }
+    }
+
+    #[test]
+    fn movie_subtitles_keep_the_original_time_intervals_and_empty_track() {
+        let subs = vec![(1.0, 2.0, "SENTINEL".to_string()), (3.0, 4.0, "NEXT_SENTINEL".to_string())];
+        for t in [0.0, 0.999, 2.0, 2.5, 4.0, 5.0] {
+            assert_eq!(select_subtitle(&subs, t, true), None);
+        }
+        for enabled in [false, true] {
+            assert_eq!(select_subtitle(&[], 1.0, enabled), None);
+        }
+    }
+}
