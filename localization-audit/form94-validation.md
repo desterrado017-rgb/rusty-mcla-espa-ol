@@ -1,8 +1,10 @@
 # Verificación del protocolo original de coleccionables
 
-Base solicitada: `df1671b`; marcador auténtico publicado en `05c25f6`.
-Las comprobaciones usan el informe original aportado por el usuario y la
-aclaración de que los botones/pausa del formulario 94 todavía no están verificados.
+Base de las pruebas: `df1671b`; marcador auténtico publicado en `05c25f6`.
+Las comprobaciones usan el informe original aportado por el usuario. La
+[actualización de autocierre](form94-autoclose-duration.md) registra la observación
+posterior: se cierra automáticamente sin pulsar un botón. Solo quedan por acreditar
+duración precisa y pausa; estas pruebas no las validan.
 
 ## Resultado y límite funcional
 
@@ -12,7 +14,7 @@ y 16 casos nuevos del backend/protocolo/persistencia (7 + 9).
 
 Esto prueba el marcador activo y las APIs preparadas. **No significa que la
 primera recogida ya muestre el formulario 94:** el pickup no se ha conectado al
-backend. No hay política de botones o pausa inferida, ni dispatcher activo de
+backend. No hay duración o política de pausa inferida, ni dispatcher activo de
 `CAREER_AUTOSAVE`; ese adaptador de App sigue pendiente.
 
 ## Marcador: RED y GREEN
@@ -113,6 +115,6 @@ Las pruebas locales usan Rust 1.99.1 disponible en Linux. Los workflows conserva
 Rust 1.99.0, WinLibs y dependencias bloqueadas. No hay compilación o publicación
 Windows ni validación visual nueva. No se incorporan los binarios originales.
 
-Quedan pendientes el código nativo de controles/pausa o una observación específica
-Xbox 360/Xenia; la conexión real a recogida, formulario y autoguardado de App;
+Quedan pendientes duración precisa y pausa, mediante evidencia dirigida o una
+observación instrumentada del original; la conexión real a recogida, formulario y autoguardado de App;
 y la comprobación visual y de avisos de trucos al completar esa integración.

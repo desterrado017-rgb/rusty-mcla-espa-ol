@@ -7,8 +7,9 @@ Base solicitada: `df1671bc2029adbd6eb97ef9f31fb267566a6c79`, rama
 **Estado:** el marcador real y el protocolo verificable están implementados.
 El backend y su puente a estadísticas se prueban directamente, pero **no están
 conectados al pickup activo**. El formulario aún no se muestra en el juego.
-Sus controles, pausa, validación visual y adaptador de autoguardado de App siguen
-pendientes, conforme a la aclaración del usuario. No se considera cerrada la tarea.
+El usuario confirma cierre automático sin pulsación. Solo quedan por acreditar
+duración precisa y pausa; la integración funcional, validación visual y adaptador
+de autoguardado de App siguen pendientes. No se considera cerrada la tarea.
 
 ## Evidencia recibida
 
@@ -35,6 +36,8 @@ El informe y la aclaración posterior confirman:
 - `COLLECTABLE_FOUND_MSG`: usa la variable `NUM_COLLECTABLE_COLLECTED` dentro de
   `<D>…</D>`. En español se conserva el doble espacio después de `COLECC.`.
 - La presencia de `prompt_continue` no demuestra qué prompt ni botón usa el 94.
+- La observación posterior del usuario confirma autocierre sin necesitar un botón;
+  no se exige identificar un botón de cierre para completar la integración.
 - La ausencia de red, conexión y editor; tutoriales habilitados; `xTCO == 0`.
 - `Form_ShowForm` solicita el 94; se consulta `Form_GetFormVisible`; entre
   reconsultas se hace `WAITUNWARPED(100)`. Tras cerrarse se obtiene
@@ -77,9 +80,10 @@ no se modifica ningún valor del guardado. `gCOL` sigue siendo otro contador.
 
 El payload `tutorial_page` usa `tutorial_keys(94)`, StringTable y la plantilla
 `MenuLayout::Tutorial` existente. Solo prepara título y descripción originales.
-Recibe los prompts de un futuro adaptador verificado: no presupone A, CONTINUE,
-MISSION LOG ni ausencia de botones. Los prompts vacíos de una prueba significan
-que no se suministró política de controles, no que el original carezca de ellos.
+Recibe los prompts del adaptador: no presupone A, CONTINUE ni MISSION LOG. El
+autocierre observado no requiere pulsación; eso no prueba ausencia de controles
+opcionales ni convierte un prompt en requisito de cierre. Los prompts vacíos de
+una prueba no certifican la presentación del original.
 
 `game/src/collectable_tutorial_stats.rs` integra las APIs reales de Game:
 
@@ -104,23 +108,25 @@ entre tablas, lista de objetos o `gCOL` al cargar.
 ## Integración que queda pendiente
 
 La [investigación de fidelidad desde `188dc57`](form94-fidelity-investigation.md)
-documenta el puente Flash, las limitaciones reales de entrada del Player y las
-funciones nativas que faltan. No se ha recibido el `.r27` original. Esta fase no
-reescribe el backend ni demuestra todavía botón, pausa, animaciones o resultado.
+documenta el puente Flash y las limitaciones del Player. La
+[actualización de autocierre y duración](form94-autoclose-duration.md) incorpora
+el nuevo informe R27 y la observación del usuario. Se recibió el informe, no el
+binario original. El botón ya no es un dato pendiente; se conserva el backend.
 
-El informe y el usuario dejan explícitamente sin acreditar los controles y la
-pausa. El código disponible no contiene la implementación nativa de esas partes.
+Solo quedan por acreditar duración precisa y pausa. El código disponible no
+contiene la implementación nativa que permita resolver estos datos para 94.
 El runner genérico marca estadísticas antes de mostrar y no permite inferir el
 contrato del 94; añadir `xTCO` a `TUTORIAL_FLAGS` sería incorrecto.
 
 Por ello `main.rs` solo registra los módulos preparados. No llama a este flujo
-al recoger un objeto, no muestra un panel sin cierre conocido y no cambia los
+al recoger un objeto, no inventa un tiempo de autocierre y no cambia los
 controles, cámara, tiempo de simulación ni el guardado actual de la recogida.
 La corrección del marcador sí actúa sobre el aviso normal existente.
 
-Para terminar se necesita comprobar `0x03770225.r27` y la gestión nativa del 94,
-o una observación específica Xbox 360/Xenia con pulsaciones, tráfico y reloj.
-Después se enlazarán apertura/cierre, las respuestas de visibilidad/resultado,
+Para terminar se necesita acreditar duración y pausa mediante la ruta de timer
+del Flash/sistema nativo o una observación instrumentada Xbox 360/Xenia sin
+pulsaciones de cierre, con tiempo y simulación visibles. Después se enlazarán
+autocierre, las respuestas de visibilidad/resultado opaco,
 los predicados reales y el evento de autoguardado al loop, sin bloquearlo.
 Esa integración también conservará el orden previo del script: actualizar
 `gCOL` y el estado local de recogidos antes de solicitar el formulario. Este
@@ -135,7 +141,7 @@ xTCO no cero, secuencia y sondeo, ausencia de dobles efectos y carga JSON.
 
 Los guardados se serializan en memoria. Para probar el `Career::restore` real se
 crea únicamente XML de misión sintético temporal, sin datos ni partidas del usuario.
-Las pruebas no validan botones, pausa, render del panel original ni un ciclo de
+Las pruebas no validan duración, pausa, render del panel original ni un ciclo de
 recogida/UI/autoguardado activo en Windows. Los avisos de trucos y la presentación
 final siguen formando parte de la aceptación pendiente al conectar App.
 

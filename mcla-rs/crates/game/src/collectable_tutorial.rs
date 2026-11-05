@@ -1,7 +1,8 @@
 //! The verified Collectables.sco protocol around original form 94.
 //!
-//! This backend does not choose buttons, pause the game or show a runtime panel.
-//! Those native-form details still need independent evidence. A future adapter
+//! The user observed automatic closure without a required button press.
+//! Exact duration and driving/simulation pause still need evidence; this backend
+//! does not set that timer, change simulation time or show a runtime panel. An adapter
 //! must acknowledge the actual form, answer its visibility query and return its
 //! result before the caller may persist xTCO and perform the following effects.
 

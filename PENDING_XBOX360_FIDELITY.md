@@ -2,10 +2,13 @@
 
 ## COLLECTABLE-FIRST-TUTORIAL — aviso del primer coleccionable
 
-**Prioridad:** alta. **Base de esta continuación:** `df1671b`.
+**Prioridad:** alta. **Base del backend:** `df1671b`; actualización desde `a8512f0`.
 **Estado:** marcador auténtico corregido; backend de disparador, visibilidad y
 persistencia implementado para pruebas. **Panel todavía no activado en la
-recogida:** faltan los controles y la pausa nativos y el adaptador de App.
+recogida:** faltan la duración precisa, la política de pausa y el adaptador de App.
+
+**Cierre confirmado por observación del usuario:** automático tras unos segundos,
+sin necesitar pulsar un botón. El botón de cierre deja de ser un requisito pendiente.
 
 El informe original aportado por el usuario acredita el formulario **94**, las
 claves `tutorial_collectables_title` / `tutorial_collectables_desc`, la condición
@@ -22,11 +25,13 @@ y reconsultas cada 100 ms, resultado de cierre, asignación de la estadística r
 petición de autoguardado y progreso posterior. El payload Flash toma sus textos
 originales de StringTable. No se introduce un bool guardado ni una migración.
 
-El usuario confirmó que no dispone aún de evidencia del botón de cierre ni de la
-pausa. Por eso quedan pendientes:
+Los únicos datos de fidelidad pendientes son **duración precisa** y **si la
+conducción/simulación continúa o se pausa**. El resultado numérico se mantiene
+opaco y no constituye un bloqueo independiente: el script lo consulta y lo ignora.
+La integración y aceptación pendientes son:
 
-1. Verificar entradas, cierre y pausa del formulario nativo 94 mediante código
-   original o una observación Xbox 360/Xenia con pulsaciones y simulación visibles.
+1. Acreditar el tiempo de autocierre (origen, base de tiempo y transición) y la
+   pausa mediante análisis dirigido o una observación instrumentada del original.
 2. Conectar la recogida al backend y al formulario real con esa política verificada,
    conservando la actualización de `gCOL` y el estado local previos al panel,
    enlazando `CAREER_AUTOSAVE` al guardado existente y conservando sus restricciones.
@@ -36,7 +41,8 @@ pausa. Por eso quedan pendientes:
 [Contrato, implementación, pruebas y límites](localization-audit/first-collectable-tutorial.md).
 La [investigación de fidelidad desde `188dc57`](localization-audit/form94-fidelity-investigation.md)
 separa script, clase nativa y Flash; documenta los recursos y funciones exactos
-que faltan. Botón, pausa, animación efectiva y resultado numérico siguen sin
-demostrarse. `is_shown()` del port no sustituye `Form_GetFormVisible`.
+que faltan. La [actualización de autocierre y duración](localization-audit/form94-autoclose-duration.md)
+incorpora el nuevo análisis R27 y sustituye la incertidumbre anterior sobre el
+cierre. `is_shown()` del port no sustituye `Form_GetFormVisible`.
 La tarea sigue abierta. Se conservan las 120 entradas, Henry, la transición inicial,
 recursos y partidas. No se publica un ejecutable.

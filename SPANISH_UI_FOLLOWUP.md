@@ -35,8 +35,10 @@ El marcador auténtico está corregido desde `05c25f6`. La variante con espacios
 del diagnóstico inicial era incorrecta.
 
 El backend de `COLLECTABLE-FIRST-TUTORIAL` está preparado y probado por separado;
-el panel no está activado en el pickup porque sus controles y pausa nativos
-siguen pendientes. Estado y alcance en
+el usuario confirma ahora que se cierra automáticamente sin pulsar un botón.
+El panel no está activado en el pickup: faltan duración precisa y política de
+pausa. El [análisis de autocierre](localization-audit/form94-autoclose-duration.md)
+documenta esos dos datos pendientes. Estado y alcance en
 [PENDING_XBOX360_FIDELITY.md](PENDING_XBOX360_FIDELITY.md) y
 [contrato original](localization-audit/first-collectable-tutorial.md).
 
