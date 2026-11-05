@@ -92,6 +92,11 @@ pub fn intro_at_start() -> Intro {
     get().map_or(Intro::Normal, |r| r.settings.game.intro)
 }
 
+/// Text language at startup. It never reads or writes the language in a game save.
+pub fn language() -> mcla_config::Language {
+    get().map_or_else(|| Settings::default().game.language, |r| r.settings.game.language)
+}
+
 // ---------------------------------------------------------------- OPTIONS > PERFORMANCE > INTRO (the port's own row)
 
 static INTRO_LIVE: Mutex<Option<Intro>> = Mutex::new(None);

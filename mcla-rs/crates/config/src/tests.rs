@@ -46,6 +46,46 @@ fn defaults_survive_a_round_trip() {
 }
 
 #[test]
+fn game_language_is_persistent_and_independent_of_launcher_language() {
+    let dir = tmp("language");
+    let path = dir.join("settings.toml");
+    std::fs::write(&path, "[game]\nlanguage = \"en\"\nfuture = 7\n[launcher]\nlanguage = \"de\"\n").unwrap();
+    let before = Settings::load(&path);
+    assert!(before.warnings.is_empty());
+    assert_eq!(before.settings.game.language, Language::English);
+    assert_eq!(before.settings.game.language.table_index(), 0);
+    set_key(&path, "game", "language", Value::String("es".into())).unwrap();
+    let loaded = Settings::load(&path);
+    assert_eq!(loaded.status, Status::Ok);
+    assert!(loaded.warnings.is_empty());
+    assert_eq!(loaded.settings.game.language, Language::Spanish);
+    assert_eq!(loaded.settings.game.language.table_index(), 1);
+    assert_eq!(loaded.settings.launcher.language, "de");
+    loaded.settings.save(&path).unwrap();
+    let saved = Settings::load(&path);
+    assert_eq!(saved.settings.game.language, Language::Spanish);
+    assert_eq!(saved.settings.to_table()["game"]["future"].as_integer(), Some(7));
+    assert!(saved.settings.summary().contains("language=es"));
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn missing_or_invalid_game_language_uses_its_default_without_losing_other_settings() {
+    assert_eq!(Settings::default().game.language, Language::Spanish);
+    for invalid in ["\"fr\"", "1", "true"] {
+        let t: Table = format!("[game]\nlanguage = {invalid}\nintro = \"fast\"\n").parse().unwrap();
+        let (s, warn) = Settings::from_table(&t);
+        assert_eq!(s.game.language, Language::Spanish);
+        assert_eq!(s.game.intro, Intro::Fast);
+        assert_eq!(warn.len(), 1);
+        assert!(warn[0].starts_with("game.language"));
+    }
+    let (s, warn) = Settings::from_table(&"[game]\nlanguage = \" ES \"\n".parse().unwrap());
+    assert!(warn.is_empty());
+    assert_eq!(s.game.language, Language::Spanish);
+}
+
+#[test]
 fn values_are_read() {
     let t: Table = r#"
 schema = 1

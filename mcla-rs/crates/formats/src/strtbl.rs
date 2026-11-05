@@ -99,14 +99,69 @@ impl StringTable {
         self.lang = if self.langs.get(lang).map_or(false, |m| !m.is_empty()) { lang } else { 0 };
     }
 
-    /// Text of a key in the table's language, in English where that has none (keys are
-    /// case-insensitive).
+    /// Text of a key in the table's language, in English where that has no entry or
+    /// an empty entry (keys are case-insensitive). Text is returned unmodified.
     pub fn get(&self, key: &str) -> Option<&str> {
         let h = joaat(key);
-        self.langs.get(self.lang).and_then(|m| m.get(&h)).or_else(|| self.langs.first()?.get(&h)).map(|s| s.as_str())
+        self.langs.get(self.lang).and_then(|m| m.get(&h)).filter(|s| !s.is_empty()).or_else(|| self.langs.first()?.get(&h)).map(|s| s.as_str())
     }
 
     pub fn get_or<'a>(&'a self, key: &'a str) -> &'a str {
         self.get(key).unwrap_or(key)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Synthetic sentinels, not translations or copies of the disc's strings.
+    fn table(en: &[(&str, &str)], es: &[(&str, &str)]) -> StringTable {
+        StringTable {
+            keys: Vec::new(),
+            langs: [en, es].into_iter().map(|rows| rows.iter().map(|(k, v)| (joaat(k), (*v).into())).collect()).collect(),
+            lang: 0,
+        }
+    }
+
+    #[test]
+    fn spanish_is_verbatim_with_english_fallback_per_key() {
+        let text = "ES_\u{a1}\u{bf}\u{e1}\u{e9}\u{ed}\u{f3}\u{fa}\u{fc}\u{f1}\n<token> %s ~1~";
+        let mut t = table(&[("present", "EN_PRESENT"), ("missing", "EN_MISSING"), ("empty", "EN_EMPTY")], &[("present", text), ("empty", "")]);
+        let original = t.langs.clone();
+        t.set_lang(1);
+        assert_eq!(t.get("PRESENT"), Some(text));
+        assert_eq!(t.get("missing"), Some("EN_MISSING"));
+        assert_eq!(t.get("empty"), Some("EN_EMPTY"));
+        assert_eq!(t.get("unknown"), None);
+        assert_eq!(t.get_or("unknown"), "unknown");
+        t.set_lang(0);
+        assert_eq!(t.get("present"), Some("EN_PRESENT"));
+        assert_eq!(t.langs, original, "selecting and reading never rewrites original text");
+    }
+
+    #[test]
+    fn absent_language_falls_back_to_english() {
+        let mut t = table(&[("only", "EN_ONLY")], &[]);
+        for lang in [1, 12, usize::MAX] {
+            t.set_lang(lang);
+            assert_eq!(t.lang, 0);
+            assert_eq!(t.get("only"), Some("EN_ONLY"));
+        }
+        assert_eq!(StringTable::default().get("missing"), None);
+    }
+
+    #[test]
+    fn select_language_after_merging_dlc_and_keep_main_precedence() {
+        let mut t = table(&[("main", "EN_MAIN"), ("shared", "EN_MAIN_SHARED")], &[]);
+        // The main table alone has no Spanish, but the DLC supplies that block.
+        t.merge(table(&[("dlc", "EN_DLC"), ("shared", "EN_DLC_SHARED")], &[("dlc", "ES_DLC")]));
+        t.merge(table(&[("tip", "EN_TIP")], &[("dlc", "ES_LATER"), ("tip", "ES_TIP")]));
+        t.set_lang(1);
+        assert_eq!(t.lang, 1);
+        assert_eq!(t.get("main"), Some("EN_MAIN"));
+        assert_eq!(t.get("dlc"), Some("ES_DLC"));
+        assert_eq!(t.get("shared"), Some("EN_MAIN_SHARED"));
+        assert_eq!(t.get("tip"), Some("ES_TIP"));
     }
 }

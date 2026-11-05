@@ -37,6 +37,7 @@ static KEYS: &[KeyInfo] = &[
     k("display.texture_filtering", "enum", "\"original\"", "original | 16x (original = anisotropy 4 while driving, 16 in the menus; 16x = 16 everywhere)", true),
     k("display.backend", "enum", "\"auto\"", "auto | vulkan | dx12 (the graphics API, read at start; auto = Vulkan where the driver has it, else DX12)", true),
     k("game.intro", "enum", "\"normal\"", "normal | fast | skip", true),
+    k("game.language", "enum", "\"es\"", "en | es (original Xbox 360 text, read at startup; missing text falls back to English)", true),
     k("game.shadow_resolution", "enum", "\"original\"", "original | 2x | 4x (the shadow map's side)", true),
     k("game.draw_distance", "enum", "\"original\"", "original | 1.5x | 2x | 3x", true),
     k("game.detail_level", "enum", "\"original\"", "original | 1.5x | 2x | 3x (model detail distances; 3x also keeps traffic cars at LOD 0)", true),

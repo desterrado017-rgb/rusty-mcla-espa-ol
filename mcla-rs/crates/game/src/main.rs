@@ -23,6 +23,7 @@ mod boomcam;
 mod camera;
 mod citymap;
 mod career;
+mod localization;
 mod catalog;
 mod modcars;
 mod modfs;

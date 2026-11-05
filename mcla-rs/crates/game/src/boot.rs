@@ -73,7 +73,7 @@ impl Boot {
         }
         let p = &mut m.player;
         p.set_global("aspect", Value::Int(1));
-        p.set_global("lang", Value::Int(0));
+        p.set_global("lang", Value::Int(shared.strings.lang as i32));
         // (zone 1 = the North American pages with the ESRB line, as recorded; the movie's own default)
         p.set_global("zone", Value::Int(1));
         p.set_global("platform", Value::Int(0));
@@ -156,18 +156,7 @@ impl Boot {
 /// What the movie needs from the UI before the game is loaded (bootload.rs): the UI texture dictionary, the string
 /// tables (the main one and those beside it, as `career::Career::load` merges them) and `UILogic`.
 pub fn shared(data_dir: &str) -> UiShared {
-    use mcla_formats::strtbl::StringTable;
-    let ui = std::path::Path::new(data_dir).join("ui");
-    let mut strings = std::fs::read(ui.join("0xa4c1e8fa")).ok().and_then(|d| StringTable::parse(&d).ok()).unwrap_or_default();
-    if let Ok(rd) = std::fs::read_dir(&ui) {
-        let mut files: Vec<std::path::PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| p.is_file() && p.file_name().map_or(false, |n| n != "0xa4c1e8fa" && n != "0xac5297d5")).collect();
-        files.sort();
-        for f in files {
-            if let Some(t) = std::fs::read(&f).ok().and_then(|d| StringTable::parse(&d).ok()) {
-                strings.merge(t);
-            }
-        }
-    }
+    let strings = crate::localization::load(data_dir, crate::hooks::language());
     UiShared { textures: std::sync::Arc::new(crate::flash_ui::load_shared(data_dir)), strings: std::sync::Arc::new(strings), logic: std::sync::Arc::new(crate::menu3d::UiLogic::load(data_dir)) }
 }
 

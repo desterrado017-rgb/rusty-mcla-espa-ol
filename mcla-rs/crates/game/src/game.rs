@@ -5568,7 +5568,7 @@ impl Game {
                         title = s("pause_Cheat_Menu", "CHEAT MENU");
                         for (i, (key, fb, need)) in CHEATS.iter().enumerate() {
                             if found >= *need {
-                                items.push((s(key, fb), if self.flash_menu.is_some() { if self.cheats[i] { crate::flash_ui::CHECK_ON } else { crate::flash_ui::CHECK_OFF }.to_string() } else if self.cheats[i] { "ON".to_string() } else { "OFF".to_string() }, Go::Page(10 + i as u8)));
+                                items.push((s(key, fb), if self.flash_menu.is_some() { if self.cheats[i] { crate::flash_ui::CHECK_ON } else { crate::flash_ui::CHECK_OFF }.to_string() } else if self.cheats[i] { s("G_On", "ON") } else { s("G_Off", "OFF") }, Go::Page(10 + i as u8)));
                             } else {
                                 // (with the movie a locked cheat is a greyed, empty box; what it needs is the port's own text)
                                 items.push((s(key, fb), if self.flash_menu.is_some() { crate::flash_ui::CHECK_OFF.to_string() } else { s(&format!("{}_Locked", key), &format!("{} COLLECTABLES NEEDED", need)) }, Go::Off));
@@ -5716,7 +5716,7 @@ impl Game {
                             items.push((s("MUSIC_GENRE_ON_THE_FLY", "CUSTOM PLAYLIST"), String::new(), if listed { Go::Page(238) } else { Go::Off }));
                         } else {
                             for (i, (key, fb)) in GENRES.iter().enumerate() {
-                                items.push((s(key, fb), if self.music_genre as usize == i { "ON".to_string() } else { String::new() }, Go::Page(30 + i as u8)));
+                                items.push((s(key, fb), if self.music_genre as usize == i { s("G_On", "ON") } else { String::new() }, Go::Page(30 + i as u8)));
                             }
                         }
                     }
@@ -7882,7 +7882,7 @@ impl Game {
                         rows_v.push((fade_row + 1, "SECONDARY COLOUR".to_string(), if self.paint_fade == 0 { "-".to_string() } else { format!("COLOUR {}", self.paint_b % PALETTE.len() + 1) }, PALETTE.len()));
                         rows_v.push((tint_row, "WINDOW TINT".to_string(), if self.tint_level == 0 { "STOCK".to_string() } else { format!("{} OF 10", self.tint_level + 1) }, 10));
                         rows_v.push((tint_row + 1, "TINT COLOUR".to_string(), if self.tint_level == 0 { "-".to_string() } else { format!("COLOUR {}", self.tint_color % PALETTE.len() + 1) }, PALETTE.len()));
-                        rows_v.push((neon_row, "NEON".to_string(), if self.neon_on { "ON" } else { "OFF" }.to_string(), 2));
+                        rows_v.push((neon_row, "NEON".to_string(), self.career.strings.get(if self.neon_on { "G_On" } else { "G_Off" }).unwrap_or(if self.neon_on { "ON" } else { "OFF" }).to_string(), 2));
                         rows_v.push((neon_row + 1, "NEON COLOUR".to_string(), if self.neon_on { format!("COLOUR {}", self.neon_color % PALETTE.len() + 1) } else { "-".to_string() }, PALETTE.len()));
                         // (the paint shop's two leading choices)
                         rows_v.push((9975, "PAINT OPTIONS".to_string(), "ALL PARTS".to_string(), 2));

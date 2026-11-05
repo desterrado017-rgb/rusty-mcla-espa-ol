@@ -2445,9 +2445,9 @@ impl Game {
         self.opts.subtitles = o.subtitles;
         self.opts.shake = o.camera_shake;
         self.opts.sens = ((o.sensitivity_step() + 10) as f32 / 2.0).round().clamp(0.0, 10.0) as u8;
-        // (the game's language: the string table's block. Test hook: MCLA_LANGUAGE=<0..4>)
-        let lang = std::env::var("MCLA_LANGUAGE").ok().and_then(|v| v.trim().parse().ok()).unwrap_or(o.language as usize);
-        self.career.strings.set_lang(lang);
+        // Text language comes from settings.toml when all tables are loaded, not
+        // from this save. Keep o.language untouched so importing options cannot
+        // reset Spanish or change the player's original language metadata.
         // (the port's list has ALL first: 7 -> 0, ECLECTIC .. WEST_RAP 0..6 -> 1..7; 8, the
         // custom playlist, plays as ALL)
         self.music_genre = if o.music_genre <= 6 { o.music_genre as u8 + 1 } else { 0 };
@@ -14140,7 +14140,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    /// The language of a save: the string table's block, English where a block is not there.
+    /// Original table blocks, including the disc's Spanish, with English fallback.
     #[test]
     fn language_of_the_save() {
         let Ok(d) = std::fs::read(std::path::Path::new(&data_dir()).join("ui/0xa4c1e8fa")) else { return };
@@ -14158,17 +14158,46 @@ mod tests {
         // (a block the table has not: English)
         assert_eq!(text(&mut t, 9), (0, "YES".into(), "ARROW".into()));
         assert_eq!(text(&mut t, 40).0, 0);
-        // (a save's language reaches the game's table; the 100 % save is English)
+        // (importing a save must keep the table language chosen from settings)
         let Some((mut g, dir, _)) = game_on("full_import.json", "lang") else { return };
-        assert_eq!((g.mc4.as_ref().unwrap().options.language, g.career.strings.lang), (0, 0));
+        assert_eq!(g.mc4.as_ref().unwrap().options.language, 0);
         g.career.strings = t;
+        g.career.strings.set_lang(1);
         g.mc4_mut().options.language = 3;
         g.mc4_options_in();
-        assert_eq!((g.career.strings.lang, g.career.strings.get("Common_Yes")), (3, Some("JA")));
+        assert_eq!(g.career.strings.lang, 1);
         // (and it is kept)
         g.write_save(&dir);
         assert_eq!(saved_block(&dir)["options"]["language"], 3);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn importing_options_keeps_selected_language_and_save_language_unchanged() {
+        use mcla_formats::{hash::joaat, strtbl::StringTable};
+        let mut g = crate::game::Game::new(Vec::new(), 0);
+        g.career.strings = StringTable {
+            keys: Vec::new(),
+            langs: ["EN_SENTINEL", "ES_SENTINEL"].into_iter().map(|s| [(joaat("language_probe"), s.to_string())].into_iter().collect()).collect(),
+            lang: 0,
+        };
+        for selected in [0, 1] {
+            for saved in [0, 1, 3, 99] {
+                g.career.strings.set_lang(selected);
+                let mut m = Mc4::seeded(false);
+                m.options.language = saved;
+                let before = serde_json::to_value(&m).unwrap();
+                g.mc4 = Some(m);
+                g.mc4_options_in();
+                assert_eq!(g.career.strings.lang, selected);
+                assert_eq!(g.career.strings.get("language_probe"), Some(if selected == 1 { "ES_SENTINEL" } else { "EN_SENTINEL" }));
+                let mut after = g.mc4.take().unwrap();
+                g.mc4_options_out(&mut after);
+                let after = serde_json::to_value(&after).unwrap();
+                assert_eq!(after["options"]["language"], before["options"]["language"]);
+                assert_eq!(after["options"]["language_name"], before["options"]["language_name"]);
+            }
+        }
     }
 
     /// The disc's controller list and maps.

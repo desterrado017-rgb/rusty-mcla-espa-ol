@@ -436,13 +436,7 @@ impl Career {
     pub fn load(data_dir: &str) -> Career {
         let root = Path::new(data_dir);
         let mut c = Career::default();
-        // the main table first, then the smaller ones beside it (South Central, tips, police)
-        if let Ok(d) = std::fs::read(root.join("ui/0xa4c1e8fa")) {
-            match StringTable::parse(&d) {
-                Ok(t) => c.strings = t,
-                Err(e) => log::warn!("career: string table: {}", e),
-            }
-        }
+        c.strings = crate::localization::load(data_dir, crate::hooks::language());
         // (the cut GT-R's names, which the table lacks: catalog::CUT_STRINGS)
         if let Some(m) = c.strings.langs.first_mut() {
             for (k, v) in crate::catalog::CUT_STRINGS {
@@ -451,15 +445,6 @@ impl Career {
             // (the mod cars' long / short names from their manifests: modcars.rs)
             for (k, v) in crate::modcars::strings() {
                 m.entry(mcla_formats::hash::joaat(k)).or_insert_with(|| v.clone());
-            }
-        }
-        if let Ok(rd) = std::fs::read_dir(root.join("ui")) {
-            let mut files: Vec<std::path::PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| p.is_file() && p.file_name().map_or(false, |n| n != "0xa4c1e8fa" && n != "0xac5297d5")).collect();
-            files.sort();
-            for f in files {
-                if let Some(t) = std::fs::read(&f).ok().and_then(|d| StringTable::parse(&d).ok()) {
-                    c.strings.merge(t);
-                }
             }
         }
         let dir = root.join("tune/career/missions");

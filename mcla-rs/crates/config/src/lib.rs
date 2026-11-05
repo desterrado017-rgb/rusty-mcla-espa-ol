@@ -52,6 +52,17 @@ impl WindowMode {
 }
 
 words!(Intro { Normal = "normal", Fast = "fast", Skip = "skip" });
+// The original Xbox 360 string-table languages supported by this fork.
+words!(Language { English = "en", Spanish = "es" });
+impl Language {
+    /// Rockstar's table block (also used by the Flash movies' `_global.lang`).
+    pub fn table_index(self) -> usize {
+        match self {
+            Language::English => 0,
+            Language::Spanish => 1,
+        }
+    }
+}
 words!(Aspect { Auto = "auto", Wide21x9 = "21:9", Wide32x9 = "32:9", Fit16x9 = "16:9" });
 words!(Upscaler { Off = "off", Bilinear = "bilinear", Fsr = "fsr" });
 // (anti-aliasing: "original" = the original's own sample counts; the old words msaa2 / msaa4 / fxaa are still read)
@@ -147,6 +158,8 @@ pub struct Display {
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameSettings {
     pub intro: Intro,
+    /// Read at startup, independently of the launcher's language and the player's save.
+    pub language: Language,
     pub shadow_resolution: ShadowRes,
     pub draw_distance: Scale,
     pub detail_level: Scale,
@@ -201,7 +214,7 @@ impl Default for Settings {
                 texture_filtering: TexFilter::Original,
                 backend: Backend::Auto,
             },
-            game: GameSettings { intro: Intro::Normal, shadow_resolution: ShadowRes::Original, draw_distance: Scale::Original, detail_level: Scale::Original, stick_dead_zone: 0 },
+            game: GameSettings { intro: Intro::Normal, language: Language::Spanish, shadow_resolution: ShadowRes::Original, draw_distance: Scale::Original, detail_level: Scale::Original, stick_dead_zone: 0 },
             paths: Paths { data_dir: String::new(), screenshots: String::new() },
             launcher: LauncherSettings { language: String::new(), check_updates: true },
             extra: Table::new(),
@@ -287,6 +300,7 @@ impl Settings {
         s.display.dof = r.boolean(dt, "display.dof", "dof", d.display.dof);
         s.display.motion_blur = r.boolean(dt, "display.motion_blur", "motion_blur", d.display.motion_blur);
         let gt = sub(t, "game");
+        s.game.language = r.word(gt, "game.language", "language", d.game.language, Language::parse, Language::WORDS);
         // ("off", the in-game INTRO row's name for it, is read as "skip"; "skip" is what is written)
         s.game.intro = r.word(gt, "game.intro", "intro", d.game.intro, |v| Intro::parse(v).or_else(|| v.trim().eq_ignore_ascii_case("off").then_some(Intro::Skip)), Intro::WORDS);
         s.game.shadow_resolution = r.word(gt, "game.shadow_resolution", "shadow_resolution", d.game.shadow_resolution, ShadowRes::parse, ShadowRes::WORDS);
@@ -336,6 +350,7 @@ impl Settings {
         put(&mut t, "display", "dof", d.dof.into());
         put(&mut t, "display", "motion_blur", d.motion_blur.into());
         put(&mut t, "game", "intro", g.intro.word().into());
+        put(&mut t, "game", "language", g.language.word().into());
         put(&mut t, "game", "shadow_resolution", g.shadow_resolution.word().into());
         put(&mut t, "game", "draw_distance", g.draw_distance.word().into());
         put(&mut t, "game", "detail_level", g.detail_level.word().into());
@@ -360,8 +375,8 @@ impl Settings {
     pub fn summary(&self) -> String {
         let (d, g) = (&self.display, &self.game);
         format!(
-            "window_mode={} resolution={} vsync={} fps_cap={} intro={} (aspect={} upscaler={} render_scale={} aa={} monitor={} backend={})",
-            d.window_mode.word(), d.resolution.text(), d.vsync, d.fps_cap, g.intro.word(), d.aspect.word(), d.upscaler.word(), d.render_scale, d.aa.word(), d.monitor, d.backend.word()
+            "window_mode={} resolution={} vsync={} fps_cap={} intro={} language={} (aspect={} upscaler={} render_scale={} aa={} monitor={} backend={})",
+            d.window_mode.word(), d.resolution.text(), d.vsync, d.fps_cap, g.intro.word(), g.language.word(), d.aspect.word(), d.upscaler.word(), d.render_scale, d.aa.word(), d.monitor, d.backend.word()
         )
     }
 }
