@@ -5,6 +5,7 @@ on:
     branches:
       - feature/xbox360-spanish-original-v0.14.0
       - fix/first-race-rival-v0.14.0
+      - test/windows-x64-c0e50e6
 
 permissions:
   contents: read
@@ -90,6 +91,14 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mcla-windows-x64-spanish-v0.14.0
+          path: mcla-rs/target/release/mcla.exe
+          if-no-files-found: error
+
+      - name: Upload independent Spanish test executable (c0e50e6)
+        if: github.ref == 'refs/heads/test/windows-x64-c0e50e6'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mcla-windows-x64-test-c0e50e6
           path: mcla-rs/target/release/mcla.exe
           if-no-files-found: error
 
