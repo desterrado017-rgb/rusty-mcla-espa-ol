@@ -1,0 +1,78 @@
+name: Build Spanish Windows x64
+
+on:
+  push:
+    branches:
+      - feature/xbox360-spanish-original-v0.14.0
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-spanish-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+# Keep the game toolchain and WinLibs pins in sync with ci.yml.
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_VERSION: "1.99.0"
+  WINLIBS_URL: https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-14.0.0-ucrt-r1/winlibs-x86_64-posix-seh-gcc-16.2.0-mingw-w64ucrt-14.0.0-r1.7z
+  WINLIBS_SHA256: 9714f9e55905000ec2a066ae033abdfe8c93083a925e3fe015d3c7cc4bb1c918
+
+jobs:
+  game:
+    name: Spanish game (Windows, GNU, UCRT)
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Rust toolchain (GNU)
+        shell: pwsh
+        run: |
+          rustup toolchain install "$env:RUST_VERSION-x86_64-pc-windows-gnu" --profile minimal
+          "RUSTUP_TOOLCHAIN=$env:RUST_VERSION-x86_64-pc-windows-gnu" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          rustup run "$env:RUST_VERSION-x86_64-pc-windows-gnu" rustc --version
+
+      - name: Restore WinLibs
+        id: winlibs-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: C:\winlibs
+          key: winlibs-${{ env.WINLIBS_SHA256 }}
+
+      - name: Download WinLibs (mingw-w64)
+        if: steps.winlibs-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri $env:WINLIBS_URL -OutFile "$env:RUNNER_TEMP\winlibs.7z"
+          $hash = (Get-FileHash -Algorithm SHA256 "$env:RUNNER_TEMP\winlibs.7z").Hash.ToLower()
+          if ($hash -ne $env:WINLIBS_SHA256) { throw "WinLibs download has sha256 $hash, expected $env:WINLIBS_SHA256" }
+          7z x "$env:RUNNER_TEMP\winlibs.7z" -oC:\winlibs -y | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "7z failed" }
+
+      - name: WinLibs on PATH
+        shell: pwsh
+        run: |
+          "C:\winlibs\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          & C:\winlibs\mingw64\bin\gcc.exe --version | Select-Object -First 1
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: mcla-rs
+          key: gnu-${{ env.RUST_VERSION }}
+
+      - name: Build the Spanish game (release, locked)
+        working-directory: mcla-rs
+        env:
+          # Use the runner's CMake with WinLibs, as in ci.yml, never Visual Studio.
+          CMAKE_GENERATOR: MinGW Makefiles
+        run: cargo build --locked --release -p mcla
+
+      - name: Upload mcla.exe
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mcla-windows-x64-spanish-v0.14.0
+          path: mcla-rs/target/release/mcla.exe
+          if-no-files-found: error
