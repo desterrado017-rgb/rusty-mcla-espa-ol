@@ -1,7 +1,7 @@
 //! Statistics/effect bridge for the verified Collectables.sco form-94 sequence.
 //!
-//! The user observed automatic closure without a required button press. This is
-//! not connected to live pickups until exact duration and pause are verified. An
+//! The user observed automatic closure without a required button press and continued
+//! driving. Live pickup integration still awaits the exact duration. A future
 //! adapter must obtain `Completed` from the form's actual visible/result queries.
 //! No new persistent flag, tutorial-list entry or save-file route is introduced.
 

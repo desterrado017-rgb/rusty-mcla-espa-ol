@@ -3,8 +3,9 @@
 Base de las pruebas: `df1671b`; marcador auténtico publicado en `05c25f6`.
 Las comprobaciones usan el informe original aportado por el usuario. La
 [actualización de autocierre](form94-autoclose-duration.md) registra la observación
-posterior: se cierra automáticamente sin pulsar un botón. Solo quedan por acreditar
-duración precisa y pausa; estas pruebas no las validan.
+posterior: se cierra automáticamente sin pulsar un botón y la conducción continúa.
+Solo queda por acreditar la duración precisa; estas pruebas no la validan ni son
+el origen de la observación de conducción continua.
 
 ## Resultado y límite funcional
 
@@ -115,6 +116,6 @@ Las pruebas locales usan Rust 1.99.1 disponible en Linux. Los workflows conserva
 Rust 1.99.0, WinLibs y dependencias bloqueadas. No hay compilación o publicación
 Windows ni validación visual nueva. No se incorporan los binarios originales.
 
-Quedan pendientes duración precisa y pausa, mediante evidencia dirigida o una
+Queda pendiente la duración precisa, mediante evidencia dirigida o una
 observación instrumentada del original; la conexión real a recogida, formulario y autoguardado de App;
 y la comprobación visual y de avisos de trucos al completar esa integración.

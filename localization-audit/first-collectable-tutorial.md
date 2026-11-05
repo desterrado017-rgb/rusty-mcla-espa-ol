@@ -7,8 +7,8 @@ Base solicitada: `df1671bc2029adbd6eb97ef9f31fb267566a6c79`, rama
 **Estado:** el marcador real y el protocolo verificable están implementados.
 El backend y su puente a estadísticas se prueban directamente, pero **no están
 conectados al pickup activo**. El formulario aún no se muestra en el juego.
-El usuario confirma cierre automático sin pulsación. Solo quedan por acreditar
-duración precisa y pausa; la integración funcional, validación visual y adaptador
+El usuario confirma cierre automático sin pulsación y conducción continua. Solo
+queda por acreditar la duración precisa; la integración funcional, validación visual y adaptador
 de autoguardado de App siguen pendientes. No se considera cerrada la tarea.
 
 ## Evidencia recibida
@@ -113,8 +113,9 @@ documenta el puente Flash y las limitaciones del Player. La
 el nuevo informe R27 y la observación del usuario. Se recibió el informe, no el
 binario original. El botón ya no es un dato pendiente; se conserva el backend.
 
-Solo quedan por acreditar duración precisa y pausa. El código disponible no
-contiene la implementación nativa que permita resolver estos datos para 94.
+Solo queda por acreditar la duración precisa; el usuario confirma conducción
+continua. El código disponible no contiene la implementación nativa que permita
+resolver la temporización de 94.
 El runner genérico marca estadísticas antes de mostrar y no permite inferir el
 contrato del 94; añadir `xTCO` a `TUTORIAL_FLAGS` sería incorrecto.
 
@@ -123,7 +124,7 @@ al recoger un objeto, no inventa un tiempo de autocierre y no cambia los
 controles, cámara, tiempo de simulación ni el guardado actual de la recogida.
 La corrección del marcador sí actúa sobre el aviso normal existente.
 
-Para terminar se necesita acreditar duración y pausa mediante la ruta de timer
+Para terminar se necesita acreditar la duración mediante la ruta de timer
 del Flash/sistema nativo o una observación instrumentada Xbox 360/Xenia sin
 pulsaciones de cierre, con tiempo y simulación visibles. Después se enlazarán
 autocierre, las respuestas de visibilidad/resultado opaco,

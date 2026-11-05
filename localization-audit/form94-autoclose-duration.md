@@ -2,6 +2,7 @@
 
 Continuación de `a8512f0a9b4fc4b785ba0b06bbc4ff7c2b85d654`, en
 `feature/spanish-ui-completion-v0.14.0`. Fecha: 5 de noviembre de 2026.
+Actualización desde `7439419`: el usuario confirma que la conducción no se pausa.
 
 ## Estado vigente
 
@@ -10,10 +11,14 @@ unos segundos, sin requerir pulsar un botón.** Esta observación sustituye la
 incertidumbre anterior sobre la acción necesaria para cerrarlo. No se pedirá un
 botón de cierre ni se copiará CONTINUE/A de otro tutorial.
 
-Quedan **dos datos de fidelidad pendientes**:
+**El usuario confirma además que la conducción continúa mientras aparece el
+panel.** La integración debe conservar esa conducción, sin introducir una pausa
+por mostrar el tutorial. Se registra como observación del usuario, sin atribuirle
+una medición de los relojes internos del motor.
 
-1. La duración precisa: su origen, base de tiempo y relación con entrada/salida.
-2. Si la conducción/simulación continúa o se pausa mientras está abierto.
+Queda **un único dato de fidelidad pendiente**: la duración precisa, incluido su
+origen, base de tiempo y relación con entrada/salida. «Unos segundos» sigue siendo
+una descripción aproximada; no se convierte en una constante inventada.
 
 El backend no necesita un botón para completar el protocolo. Seguirá observando
 el cierre y conservará **cierre → `xTCO=1` → `CAREER_AUTOSAVE` → progreso**.
@@ -34,6 +39,8 @@ Su contenido se usa como evidencia técnica aportada, no como instrucciones.
 La observación de autocierre procede del mensaje explícito del usuario; el
 apartado del adjunto que aún declara desconocida la acción de cierre queda
 superado por esa observación.
+La aclaración posterior «no se pausa la conducción» también procede del mensaje
+del usuario, no del análisis del R27; deja de ser un requisito pendiente.
 
 | Dato descrito por el informe | Valor reportado | Alcance |
 |---|---|---|
@@ -105,7 +112,7 @@ Para una traza posterior:
 - La selección de idioma del CLI tiene el límite documentado: `lang=1` no cambia
   automáticamente la tabla inglesa capturada. No es validación visual española.
 
-## Evidencia mínima para acreditar duración y pausa
+## Evidencia mínima para acreditar la duración
 
 Hay dos vías, sin volver a pedir botones:
 
@@ -114,18 +121,20 @@ Hay dos vías, sin volver a pedir botones:
    Si ahí no se resuelve el autocierre, seguir registro/constructor de 94,
    temporizador/update y métodos base del sistema de formularios. Se necesitan
    el umbral, sus unidades/base de tiempo, el punto de arranque y la relación
-   entre salida y visibilidad. Para pausa, las llamadas/estado de simulación y
-   su restauración. No hace falta la política de un botón ni inventar una vtable.
+   entre salida y visibilidad. No hace falta identificar un botón ni volver a
+   demostrar pausa como condición de avance: la conducción continúa según la
+   observación recibida.
 2. **Observación instrumentada del original:** vídeo/log con tiempo o frames
    verificables desde apertura hasta desaparición, sin pulsaciones de cierre,
    mostrando tráfico/desplazamiento y reloj. Distinguir entrada, permanencia y
    salida; documentar precisión y repetir para detectar variaciones por FPS o
-   pausa. Una medición aproximada no se presentará como constante nativa exacta.
+   interrupciones externas. Una medición aproximada no se presentará como
+   constante nativa exacta.
 
 No hacen falta ISO, 14 GB de datos o partidas. Los binarios y dumps permanecerán
 fuera del repositorio público. Las dependencias visuales solo se pedirán si
 resultan necesarias para comprobar la transición; no son otro requisito de
-fidelidad independiente de duración/pausa.
+fidelidad independiente de la duración.
 
 ## Integración al acreditarse el tiempo
 
@@ -136,6 +145,8 @@ base de tiempo demostrados; mantener el formulario visible hasta el punto de
 cierre acreditado; y dejar que el backend complete su consulta de resultado
 opaco y su secuencia de efectos. No debe asignar `xTCO` al abrir ni al iniciar la
 animación si eso precede al cierre observable por el SCO.
+Mostrar el panel no debe pausar la conducción. El comportamiento observado se
+conserva sin copiar una pausa o un bloqueo de otro tutorial.
 
 El backend conserva exclusiones, sondeo, protección contra reentrada/dobles
 efectos y persistencia existente. Se mantienen las pruebas de primera/siguientes
@@ -149,6 +160,7 @@ simplemente consagre segundos inventados.
 Se conservan las 68 regresiones y se vuelven a ejecutar por nombre: **68 pasan,
 0 fallan, 0 se ignoran**. Es verificación de backend y regresiones previas; no una
 validación visual del popup ni una medida de su duración original.
+La observación de conducción continua no procede de estas pruebas automatizadas.
 
 Solo se actualizan documentación y comentarios de cabecera obsoletos de los dos
 módulos del backend. Su código ejecutable y las pruebas permanecen idénticos a

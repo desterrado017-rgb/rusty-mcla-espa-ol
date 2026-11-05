@@ -5,7 +5,8 @@ Base leída: `188dc579c53d21c422a8443af8b86b2ddd4b5382`, rama `feature/spanish-u
 **Actualización desde `a8512f0`:** el usuario confirma cierre automático tras unos
 segundos, sin necesitar pulsación. El botón de cierre ya no es un requisito
 pendiente. El nuevo informe R27 acredita secundariamente plantilla 60 y
-transiciones. Solo quedan por acreditar duración precisa y pausa; véase
+transiciones. El usuario confirma además que la conducción continúa: solo queda
+por acreditar la duración precisa; véase
 [autocierre y origen de la duración](form94-autoclose-duration.md). La cabecera y
 verificación al final describen la entrega histórica; las conclusiones siguientes
 incorporan esta nueva evidencia.
@@ -15,10 +16,10 @@ incorporan esta nueva evidencia.
 | Pregunta | Conclusión comprobable | Límite |
 |---|---|---|
 | Cierre de 94 | **Automático, sin necesitar pulsación**, confirmado por observación del usuario. | «Unos segundos» no acredita duración precisa; no se exige identificar un botón. |
-| Pausa o bloqueo de controles | **Desconocido para 94.** El flujo de Collectables documentado espera con WAITUNWARPED; esto no demuestra si simulación/tráfico continúan. | El uso de cámara/slow-motion de otros tutoriales no prueba el comportamiento de este. |
+| Conducción durante el panel | **Continúa, sin pausa**, según la aclaración del usuario. | Es observación de conducción; no una medida instrumentada de los relojes internos. No se introduce una pausa copiada de otro tutorial. |
 | Duración y transición | El nuevo informe R27 describe template 60 y lógica de transiciones; el port publica `cur_visibility`, `transition_type`, `TransitionLevel`. | No se aporta un umbral temporal. Entrada/permanencia/salida se investigan como partes de la duración. |
 | Resultado de cierre | El SCO consulta `Form_GetFormResult` y lo ignora para los efectos posteriores; el backend lo admite opaco. | Valor nativo concreto desconocido; no se inventa ni se considera otro bloqueo independiente. |
-| Integración con Rusty MCLA | Renderer y backend admiten el protocolo sin requerir pulsaciones. Falta acreditar duración y pausa y conectar el adaptador. | `FlashMenu::is_shown()` no es `Form_GetFormVisible`, y `hide()` no ejecuta `Form_GetFormResult`. |
+| Integración con Rusty MCLA | Renderer y backend admiten el protocolo sin requerir pulsaciones. Falta acreditar duración y conectar el adaptador, conservando la conducción continua. | `FlashMenu::is_shown()` no es `Form_GetFormVisible`, y `hide()` no ejecuta `Form_GetFormResult`. |
 
 La película original `resources/ui/0xe83b42ec/0x03770225.r27`, `shared_latin.r9` y el ejecutable nativo original no existen en el workspace inspeccionado. Por tanto no se ha inspeccionado ningún byte AVM1 original de este formulario. El port referencia y espera esa ruta de recurso; la referencia no demuestra el contenido del archivo.
 
@@ -85,7 +86,7 @@ Estas escrituras describen un **protocolo del host actual**, no la animación ef
 
 Estos límites del Player explican por qué una prueba de pulsación no certificaría
 el control original. **No bloquean el cierre de 94**, observado como automático.
-La investigación se centra ahora en temporización y pausa. Esto no significa que
+La investigación se centra ahora en temporización. Esto no significa que
 los menús del port fallen: muchos controles se resuelven en el host Rust.
 
 ### Tutoriales ya implementados y por qué no sirven como contrato de 94
@@ -157,8 +158,8 @@ ejecuta o que no existe una ruta de cierre.
 2. **Para reproducir el aspecto y verificar resolución de texto:** `data/cache/resources/ui/shared_latin.r9` y `data/cache/resources/ui/0xa4c1e8fa`; si las claves o imports de la película residen en suplementos, únicamente esos recursos concretos identificados al desensamblar. El informe ya aporta las dos cadenas, pero no sustituye una inspección reproducible del recurso.
 3. **Si la duración no se resuelve en Flash:** registro de 94, constructor y
    métodos propios/base que inicializan y actualizan el temporizador, comparan
-   su umbral y cambian visibilidad; política de simulación y restauración al
-   cerrar. Bastan extractos con direcciones, referencias y versión/hash de origen.
+   su umbral y cambian visibilidad. Bastan extractos con direcciones, referencias
+   y versión/hash de origen; pausa ya no es un requisito pendiente.
    No se exige encontrar un manejador de botón para cerrar este formulario.
 4. Los wrappers se identifican en `mcla-rs/data/native_names.tsv`: `f0e9e088` → Form_ShowForm, `90925407` → Form_GetFormVisible, `f4096181` → Form_GetFormResult. Son hashes de nombres nativos, **no direcciones PowerPC**. Hay que seguirlos hasta el objeto del formulario 94 y las acciones, no confundirlos con callbacks FSCommand.
 5. El comentario del port menciona registro `F-26445` y constructores en el rango `F-10143 .. F-86881` (`mc4.rs:11450`, `:11578`). Son etiquetas del análisis previo, no una dirección ni una identificación demostrada del constructor de 94. No se ha inventado una función concreta a partir del rango.
@@ -166,8 +167,8 @@ ejecuta o que no existe una ruta de cierre.
 
 La ruta nativa debe identificar origen/base de tiempo del autocierre y relación
 entre salida y visibilidad. `Form_GetForm` (`07d5e024`) y `Form_CloseForm`
-(`b2dbb186`), si participa, ayudan a seguir el objeto. Para pausa se siguen las
-llamadas de tiempo/simulación y restauración. Los nombres por sí solos no prueban
+(`b2dbb186`), si participa, ayudan a seguir el objeto y su temporización. No se
+añadirá una pausa al mostrar el panel. Los nombres por sí solos no prueban
 que 94 los llame. El resultado se conserva opaco, sin exigir su enum como un
 tercer requisito de fidelidad.
 
@@ -181,7 +182,8 @@ las herramientas `tools/recomp_dispatch.py`, `recomp_closure.py` y
 14 GB de datos ni partidas; no se incorporarán binarios o dumps al repositorio.
 
 Una observación instrumentada sin pulsaciones de cierre, con tiempo verificable
-y simulación visibles, permite contrastar duración y pausa. No revela por sí sola
+y conducción visible, permite medir duración manteniendo el comportamiento
+continuo ya observado. No revela por sí sola
 el resultado numérico; este se mantiene opaco y no bloquea esa comprobación.
 
 En una observación deben contrastarse varios indicadores: tráfico, desplazamiento
@@ -194,7 +196,7 @@ coche sin entrada no prueban por sí solos pausa global de la simulación.
 2. Extraer info/chars/asm; buscar y verificar la rama que atiende template 60 solicitado por el host, variables de transición, prompts, controles y FSCommands; inventariar imports antes de pedir otros archivos.
 3. Seguir el temporizador de 94 o su clase base/manager: inicio, fuente de tiempo, umbral y ruta de cierre; no buscar un botón como requisito pendiente.
 4. Trazar separación entre ocultación lógica, fin de animación y Form_GetFormVisible; verificar si el script espera hasta el inicio o final de una salida.
-5. Comprobar llamadas o estado de pausa/bloqueo, sin deducirlos de WAITUNWARPED ni de otro tutorial.
+5. Conservar la conducción continua observada, sin añadir pausa/bloqueo por analogía con otro tutorial.
 6. Solo tras demostrar el contrato, conectar el backend preparado al renderer/host y escribir regresiones del contrato real, conservando el orden cierre→xTCO→autoguardado→progreso y las estadísticas importadas/exportadas.
 
 El adaptador conservará además la actualización previa de recogidos y `gCOL`,

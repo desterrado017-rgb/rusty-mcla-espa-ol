@@ -5,10 +5,12 @@
 **Prioridad:** alta. **Base del backend:** `df1671b`; actualización desde `a8512f0`.
 **Estado:** marcador auténtico corregido; backend de disparador, visibilidad y
 persistencia implementado para pruebas. **Panel todavía no activado en la
-recogida:** faltan la duración precisa, la política de pausa y el adaptador de App.
+recogida:** faltan la duración precisa y el adaptador de App.
 
 **Cierre confirmado por observación del usuario:** automático tras unos segundos,
 sin necesitar pulsar un botón. El botón de cierre deja de ser un requisito pendiente.
+**Conducción confirmada por el usuario:** continúa mientras se muestra el panel;
+no se introducirá una pausa por este tutorial.
 
 El informe original aportado por el usuario acredita el formulario **94**, las
 claves `tutorial_collectables_title` / `tutorial_collectables_desc`, la condición
@@ -25,13 +27,12 @@ y reconsultas cada 100 ms, resultado de cierre, asignación de la estadística r
 petición de autoguardado y progreso posterior. El payload Flash toma sus textos
 originales de StringTable. No se introduce un bool guardado ni una migración.
 
-Los únicos datos de fidelidad pendientes son **duración precisa** y **si la
-conducción/simulación continúa o se pausa**. El resultado numérico se mantiene
+El único dato de fidelidad pendiente es la **duración precisa**. El resultado numérico se mantiene
 opaco y no constituye un bloqueo independiente: el script lo consulta y lo ignora.
 La integración y aceptación pendientes son:
 
-1. Acreditar el tiempo de autocierre (origen, base de tiempo y transición) y la
-   pausa mediante análisis dirigido o una observación instrumentada del original.
+1. Acreditar el tiempo de autocierre (origen, base de tiempo y transición)
+   mediante análisis dirigido o una observación instrumentada del original.
 2. Conectar la recogida al backend y al formulario real con esa política verificada,
    conservando la actualización de `gCOL` y el estado local previos al panel,
    enlazando `CAREER_AUTOSAVE` al guardado existente y conservando sus restricciones.

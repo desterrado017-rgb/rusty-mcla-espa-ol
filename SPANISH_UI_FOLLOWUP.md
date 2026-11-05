@@ -36,9 +36,10 @@ del diagnóstico inicial era incorrecta.
 
 El backend de `COLLECTABLE-FIRST-TUTORIAL` está preparado y probado por separado;
 el usuario confirma ahora que se cierra automáticamente sin pulsar un botón.
-El panel no está activado en el pickup: faltan duración precisa y política de
-pausa. El [análisis de autocierre](localization-audit/form94-autoclose-duration.md)
-documenta esos dos datos pendientes. Estado y alcance en
+El usuario confirma además que la conducción continúa. El panel no está activado
+en el pickup: solo falta acreditar su duración precisa. El
+[análisis de autocierre](localization-audit/form94-autoclose-duration.md)
+documenta ese dato pendiente. Estado y alcance en
 [PENDING_XBOX360_FIDELITY.md](PENDING_XBOX360_FIDELITY.md) y
 [contrato original](localization-audit/first-collectable-tutorial.md).
 
