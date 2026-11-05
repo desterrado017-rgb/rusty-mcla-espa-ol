@@ -1,131 +1,138 @@
-# Tutorial del primer coleccionable: investigación y pruebas pendientes
+# Primer coleccionable: contrato original y backend preparado
 
-Base de las referencias: `48d2792ab84904dbfe3e5071d53f2bb0ad4afadb`, rama
-`feature/spanish-ui-completion-v0.14.0`. Tarea `COLLECTABLE-FIRST-TUTORIAL`,
-registrada en [PENDING_XBOX360_FIDELITY.md](../PENDING_XBOX360_FIDELITY.md).
+Base solicitada: `df1671bc2029adbd6eb97ef9f31fb267566a6c79`, rama
+`feature/spanish-ui-completion-v0.14.0`. Corrección inmediata del marcador:
+`05c25f63564a257a8f4fe518978d1fd8c8106e65`.
 
-**Estado real:** investigación inicial de código completada; no se ha
-implementado el tutorial ni se han acreditado sus condiciones originales.
-Las pruebas específicas de primera recogida y persistencia se describen abajo
-como pendientes. No se atribuye ningún texto español no inspeccionado a Rockstar.
+**Estado:** el marcador real y el protocolo verificable están implementados.
+El backend y su puente a estadísticas se prueban directamente, pero **no están
+conectados al pickup activo**. El formulario aún no se muestra en el juego.
+Sus controles, pausa, validación visual y adaptador de autoguardado de App siguen
+pendientes, conforme a la aclaración del usuario. No se considera cerrada la tarea.
 
-## Evidencia disponible
+## Evidencia recibida
 
-| Recorrido en la base | Comprobación |
-|---|---|
-| `game/src/main.rs:4961–4981` | La recogida añade el índice, llama a `collectable_text::found_message`, reproduce el sonido y usa el guardado existente. No solicita un tutorial. |
-| `game/src/main.rs:13762–13774` | Lee `script_obj/game/MiscTasks/Collectables.sco` para extraer las 60 posiciones. No interpreta las ramas originales del tutorial. |
-| `game/src/mc4.rs:11578–11643` | `TUTORIAL_FORMS` incluye `(94, "collectables")`; `tutorial_keys(94)` produce `tutorial_collectables_title` y `tutorial_collectables_desc`. |
-| `game/src/mc4.rs:11614–11638` | Los 22 disparadores de `TUTORIAL_FLAGS` no incluyen el formulario 94. No se ha identificado su contrato de disparo en el port. |
-| `game/src/mc4.rs:12046–12180` | Los tutoriales registrados usan estadísticas, cola y un estado activo. `mc4_tutorial` rechaza flags desconocidos; `mc4_tut_seen` consulta la estadística. |
-| `game/src/game.rs:9788–9827` | El prompt CONTINUE y el cierre por entrada dependen de un estado reconocido. Abrir únicamente `tutorial_box` para el 94 no los garantiza. |
-| `game/src/flash_ui.rs:903,1045,1223` | Existe la ruta de popup original, con `MenuLayout::Tutorial` y plantilla 60. El título y la descripción se leen de StringTable. |
+Se leyó `INFORME_COLECCIONABLES_XBOX360.md`, aportado por el usuario el 5 de noviembre
+de 2026. SHA-256 del informe leído:
+`13f8695cf20dfb00aebf2711926f49b32bff5cb46944f85d07bf3912d78edadc`.
+El informe describe la descompilación del SCO y la lectura de los recursos:
 
-Las rutas `game/src` son relativas a `mcla-rs/crates/`. Los mapeos de formulario
-y claves también están en el v0.14.0 oficial
-`30d8b1f3b54557664d81bb7cfc9cc33caea53647`. Esto prueba nombres y rutas de
-consumo; no la existencia ni el contenido castellano de las entradas en una
-instalación cuyos recursos no están disponibles aquí.
+| Recurso original analizado en el informe | Tamaño | SHA-256 reportado |
+|---|---:|---|
+| `Collectables.sco` | 1.868 bytes | `621fe074089ae1a1dae34d9d28d9e8c0c861331ab6fc5e7b38ba862a45d754ad` |
+| `ui/0xa4c1e8fa` | 2.157.137 bytes | `c01f84edf4563d21084140839b9ead10405f97ae01949ad4abc90b5fb8a3965d` |
 
-El texto «COLLECTABLES» y la explicación del desbloqueo de trucos forman parte
-del comportamiento reportado por el usuario. No se ha redactado ni insertado
-una supuesta versión oficial española.
+Los binarios no se recibieron ni se copiaron al repositorio en esta continuación.
+La procedencia de los textos y del flujo se acredita mediante el informe, sin
+presentar su lectura como una inspección local independiente de esos binarios.
+Se incluyen únicamente fixtures textuales reducidos para las regresiones solicitadas.
 
-## Condiciones y persistencia por demostrar
+El informe y la aclaración posterior confirman:
 
-- `SaveData.collected` conserva índices. El importador original lee 60 bytes de
-  LocalOptions desde `0x3DF84` (`savedecode/src/options.rs:16–17,244`) y conserva
-  los índices no nulos (`savedecode/src/convert.rs:551–552`).
-- `gCOL` es el contador estadístico; se sincroniza al alza desde la lista
-  (`mc4.rs:12610–12614`). La lista y las estadísticas son canales distintos.
-  Su actualización ocurre en momentos diferentes del tick: no se debe dar por
-  hecho que siempre coinciden al guardar o cargar.
-- `Mc4.tutorials_shown` conserva una lista de flags; el importador obtiene los
-  `tT…` verdaderos, excepto `tTTA`. No se ha demostrado un flag de coleccionables.
-  La ausencia de formulario 94 en la tabla del port tampoco prueba que el
-  original necesite un flag separado: podría usar un contador u otro predicado.
-- Collectables figura en `SCRIPTS_WITHOUT_DATA` (`mc4.rs:10143`), con cero
-  palabras propias guardadas en ese registro. Esto no descarta Stats,
-  LocalOptions, globals u otro canal de persistencia.
-- `xTCO` está documentado como «todos los coleccionables encontrados»; no debe
-  reutilizarse como «tutorial mostrado». No se introducirán `tTCO`, `tTCL` ni
-  otro identificador o bool nuevo sin evidencia.
+- `tutorial_collectables_title`: `COLLECTABLES` / `OBJETOS COLECCIONABLES`.
+- `tutorial_collectables_desc`: descripción original que explica el desbloqueo de
+  trucos; los fixtures conservan el doble espacio inglés y `Éstos` en español.
+- `COLLECTABLE_FOUND_MSG`: usa la variable `NUM_COLLECTABLE_COLLECTED` dentro de
+  `<D>…</D>`. En español se conserva el doble espacio después de `COLECC.`.
+- La presencia de `prompt_continue` no demuestra qué prompt ni botón usa el 94.
+- La ausencia de red, conexión y editor; tutoriales habilitados; `xTCO == 0`.
+- `Form_ShowForm` solicita el 94; se consulta `Form_GetFormVisible`; entre
+  reconsultas se hace `WAITUNWARPED(100)`. Tras cerrarse se obtiene
+  `Form_GetFormResult`, cuyo valor no decide los efectos posteriores.
+- Después: asignar `xTCO/0 = 1` con operación 3, pedir `CAREER_AUTOSAVE` y mostrar
+  el contador. El script también contempla `CHEAT_UNLOCKED` en múltiplos de diez;
+  esa presentación deberá mantenerse al completar la integración de App.
 
-Por tanto, no se marcará automáticamente como visto a quien tenga progreso ni
-se considerará pendiente en toda partida que carezca de un bool nuevo. Ambas
-decisiones afirmarían un historial no acreditado. La implementación deberá
-respetar el estado real de las partidas anteriores y los campos desconocidos.
+## Corrección del marcador y de la interpretación de estadísticas
 
-También falta verificar si se marca al solicitar, mostrar o cerrar el panel;
-si la recogida durante una carrera lo aplaza; cómo afecta la supresión de
-tutoriales; y el orden exacto entre tutorial, sonido, progreso y guardado.
-La ruta actual admite recogidas en carrera, pero el tutorial genérico no tiene
-por ello garantizada una presentación válida en ese modo.
+La implementación y sus primeras pruebas usaban incorrectamente
+`<D>NUM COLLECTABLE COLLECTED</D>`. Es una errata del código y de esas pruebas,
+no un token alternativo del juego. `collectable_text.rs` ahora sustituye solo
+`<D>NUM_COLLECTABLE_COLLECTED</D>` y conserva el resto del recurso. El token con
+espacios se trata como desconocido; no se normalizan identificadores.
 
-## Presentación y controles
+Se añadieron las cadenas reales EN/ES de progreso del informe. La regresión con
+el token antiguo falla mostrando el marcador literal; con el correcto pasa.
+No se reescribe el denominador oficial ni se añade un contador adicional.
 
-El popup actual es `resources/ui/0xe83b42ec/0x03770225.r27`. Las fuentes/arte
-compartidos se cargan desde `resources/ui/shared_latin.r9`. El recurso de
-prompt independiente no equivale al panel de tutorial.
+La descripción previa de `xTCO` en `tools/mc4save/small.py` como «all collectables
+found flag» era incorrecta para este flujo. Se corrige el metadato descriptivo;
+no se modifica ningún valor del guardado. `gCOL` sigue siendo otro contador.
 
-Crear solo un `tutorial_box` con las dos claves no basta: sin el estado de
-tutorial pertinente puede quedar sin CONTINUE, sin cierre por el botón
-correcto y con el timeout genérico de 600 segundos. No se copiarán por analogía
-la pausa, voz, duración o controles de otro tutorial. La lista de llamadas del
-decodificador `Sco::calls` es lineal y no sigue ramas; deberá revisarse el flujo
-del script para demostrar sus condiciones, no solo buscar constantes.
+## Protocolo implementado, sin asignar controles nativos
 
-## Matriz de regresión que se añadirá con la implementación
+`game/src/collectable_tutorial.rs` ofrece:
 
-**Todos estos casos están pendientes.** No son tests ejecutados ni una
-certificación del tutorial a partir de un modelo supuesto. Se usarán partidas
-sintéticas y el contrato persistente demostrado por el script.
+1. Elegibilidad con el valor real de `xTCO` y los cuatro predicados explícitos.
+   No se deriva de la cantidad recogida ni se marca visto al solicitar el panel.
+2. Solicitud de formulario 94 y confirmación de que el adaptador lo ha mostrado.
+   Una petición sin confirmar no equivale a un formulario cerrado.
+3. Primera consulta de visibilidad inmediata; posteriores cada 100 ms de tiempo
+   no escalado. Se espera la respuesta, sin ráfagas ni bloqueo del loop.
+4. Visibilidad desconocida, otro formulario o un resultado fuera de orden no
+   completan el tutorial. El cierre solicita el resultado real, sin interpretar
+   su valor como un botón.
+5. Token de finalización opaco y transitorio. El flujo continúa ocupado hasta
+   confirmar los efectos, evitando otro disparo mientras `xTCO` todavía sea cero.
 
-| Caso | Resultado que debe verificarse |
-|---|---|
-| Partida nueva, primera recogida válida: 1/60 | Un único panel original 94, explicación obtenida de recursos y controles/cierre acreditados. Orden con progreso según el script. |
-| Siguiente recogida: 2/60 | Solo progreso normal, sin tutorial repetido y sin marcador literal ni contador duplicado. |
-| Tercera y posteriores: 3/60, 59/60, 60/60 | Progreso correcto; no repetir el tutorial ni alterar desbloqueos existentes. |
-| Carga sin coleccionables y primera recogida posterior | Mantener la elegibilidad que indique el estado original; cargar por sí solo no equivale a recoger. |
-| Carga de partida que ya mostró el tutorial | No repetirlo al cargar ni en la siguiente recogida. Preservar el estado persistente original. |
-| Guardar/cargar antes y después de cerrar el panel | Reproducir el momento original de persistencia, sin deducirlo de otro tutorial. |
-| Partida anterior del port o importada de Xbox 360 | Conservar índices, estadísticas, lista de tutoriales y campos ajenos; ninguna migración por un flag supuesto. |
-| Lista y `gCOL` distintos o campos opcionales ausentes | Preservar ambos; aplicar únicamente la precedencia original demostrada, sin reparaciones automáticas. |
-| Recogida en carrera, otro cuadro activo o tutoriales suprimidos | Reproducir el aplazamiento/supresión real, sin perder ni repetir el tutorial. |
-| Inglés y español | Usar las mismas claves y recursos originales; sin traducción manual, con controles, saltos y ausencia de recortes verificados visualmente. |
+El payload `tutorial_page` usa `tutorial_keys(94)`, StringTable y la plantilla
+`MenuLayout::Tutorial` existente. Solo prepara título y descripción originales.
+Recibe los prompts de un futuro adaptador verificado: no presupone A, CONTINUE,
+MISSION LOG ni ausencia de botones. Los prompts vacíos de una prueba significan
+que no se suministró política de controles, no que el original carezca de ellos.
 
-En todos los casos se conservará el formateador de `COLLECTABLE_FOUND_MSG` ya
-corregido. La cobertura automática y la validación visual se informarán por
-separado. No se añadirán tests ignorados o simulaciones de un flag inventado
-para presentar esta tarea como resuelta.
+`game/src/collectable_tutorial_stats.rs` integra las APIs reales de Game:
 
-## Archivos mínimos para continuar
+- `collectable_tutorial_begin` consulta `mc4_stat("xTCO", 0)` con la precedencia
+  existente. Ausente vale cero; no se modifica el estado al consultar o cargar.
+- `collectable_tutorial_finish` valida que el token pertenece a ese flujo,
+  asigna `xTCO` con el gestor existente, invoca el callback `CAREER_AUTOSAVE`,
+  presenta el progreso auténtico y confirma los efectos para liberar el flujo.
+- El callback es el contrato de petición, **no un dispatcher activo de App**.
+  Cuando se conecte, deberá usar `write_save`, respetando `no_save` y los errores
+  existentes. La petición precede al progreso; no se afirma que la escritura a
+  disco deba completarse antes del splash original.
+- Se conservan las restricciones del gestor de estadísticas, incluida capacidad
+  y goal attack. Un rechazo no fuerza un registro ni inventa un rollback; se
+  mantienen la petición y el progreso como en el flujo del script.
 
-Copias de lectura de estos archivos ya presentes en la extracción del usuario,
-sin editar sus bytes y conservando la capitalización real:
+El estado no es serializable y no añade campos a SaveData. La persistencia sigue
+estando en `career.stats` y `career.ostats`, sin añadir `xTCO` a `tutorials_shown`.
+El MC4 tipado y el MC4 incompatible/raw se conservan. No se reparan discrepancias
+entre tablas, lista de objetos o `gCOL` al cargar.
 
-1. `data/cache/script_obj/game/MiscTasks/Collectables.sco`.
-2. `data/cache/ui/0xa4c1e8fa`.
-3. `data/.install/files.tsv`, si existe; en su defecto, un listado de nombres y
-   tamaños de `data/cache/ui`, para localizar una tabla suplementaria si procede.
+## Integración que queda pendiente
 
-Para validar el panel visual después de resolver el script, podrán necesitarse
-`data/cache/resources/ui/0xe83b42ec/0x03770225.r27` y
-`data/cache/resources/ui/shared_latin.r9`. Si los controles dependen de código
-nativo no descrito por esos recursos, se identificará la evidencia concreta que
-falte después de leer el script; no se asignarán controles por suposición.
+El informe y el usuario dejan explícitamente sin acreditar los controles y la
+pausa. El código disponible no contiene la implementación nativa de esas partes.
+El runner genérico marca estadísticas antes de mostrar y no permite inferir el
+contrato del 94; añadir `xTCO` a `TUTORIAL_FLAGS` sería incorrecto.
 
-No se necesitan ISO, partidas reales, claves, audio/vídeo ni reconstruir los
-14 GB. Se analizará el `.sco` ya extraído que utiliza el port; no se reescribirá
-ni reconvertirá el archivo original por suposición.
+Por ello `main.rs` solo registra los módulos preparados. No llama a este flujo
+al recoger un objeto, no muestra un panel sin cierre conocido y no cambia los
+controles, cámara, tiempo de simulación ni el guardado actual de la recogida.
+La corrección del marcador sí actúa sobre el aviso normal existente.
 
-## Alcance de este registro
+Para terminar se necesita comprobar `0x03770225.r27` y la gestión nativa del 94,
+o una observación específica Xbox 360/Xenia con pulsaciones, tráfico y reloj.
+Después se enlazarán apertura/cierre, las respuestas de visibilidad/resultado,
+los predicados reales y el evento de autoguardado al loop, sin bloquearlo.
+Esa integración también conservará el orden previo del script: actualizar
+`gCOL` y el estado local de recogidos antes de solicitar el formulario. Este
+backend no altera la actualización del contador ni reemplaza esa parte de App.
 
-Esta entrega añade documentación de trabajo pendiente y evidencia de la
-investigación. No cambia código, guardados, recursos, las 120 entradas,
-Henry ni la corrección del contador. No compila ni publica otro ejecutable.
+## Pruebas y validación
 
-Se reejecutaron las 51 regresiones focalizadas existentes del harness de
-`48d2792`: 51 correctas, 0 fallidas y 0 ignoradas, incluidas las del marcador,
-Henry y el traspaso de película. Esto comprueba la base conservada; no valida
-el tutorial que aún no se ha implementado ni los casos pendientes de la matriz.
+Los resultados exactos se publican en [form94-validation.md](form94-validation.md).
+Las pruebas nuevas usan texto auténtico reducido y las APIs reales del backend,
+Game, Career y SaveData. Cubren primera/siguientes recogidas elegibles, supresión,
+xTCO no cero, secuencia y sondeo, ausencia de dobles efectos y carga JSON.
+
+Los guardados se serializan en memoria. Para probar el `Career::restore` real se
+crea únicamente XML de misión sintético temporal, sin datos ni partidas del usuario.
+Las pruebas no validan botones, pausa, render del panel original ni un ciclo de
+recogida/UI/autoguardado activo en Windows. Los avisos de trucos y la presentación
+final siguen formando parte de la aceptación pendiente al conectar App.
+
+Se conservan las 120 entradas, Henry, la máscara de apertura, dependencias,
+lockfiles y recursos originales. No se publica un ejecutable.

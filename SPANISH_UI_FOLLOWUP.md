@@ -10,7 +10,7 @@ se conservan. No se fusiona con estable ni se publica un ejecutable Windows.
 
 La ruta de recogida copiaba `COLLECTABLE_FOUND_MSG` sin expandir su variable y
 añadía siempre otro contador. Con el marcador reportado por el usuario, el
-resultado incluía literalmente `<D>NUM COLLECTABLE COLLECTED</D>` y un sufijo
+resultado conservaba el marcador dinámico literal y un sufijo
 de progreso adicional. Ese código ya existe en v0.14.0 oficial; no procede del
 catálogo español.
 
@@ -29,12 +29,16 @@ de prueba son centinelas, no traducciones atribuidas a Rockstar.
 
 Detalles y evidencia: [collectables.md](localization-audit/collectables.md).
 
-El tutorial original de la **primera** recogida es una tarea distinta y sigue
-pendiente. Se ha registrado como `COLLECTABLE-FIRST-TUTORIAL` en
-[PENDING_XBOX360_FIDELITY.md](PENDING_XBOX360_FIDELITY.md), con investigación del
-formulario 94, condiciones de persistencia y matriz de pruebas de primera
-recogida, posteriores y carga. El formateador de progreso corregido no activa
-por sí solo ese panel.
+El informe original aportado posteriormente corrigió el token a
+`<D>NUM_COLLECTABLE_COLLECTED</D>` y acreditó `xTCO` y el formulario 94.
+El marcador auténtico está corregido desde `05c25f6`. La variante con espacios
+del diagnóstico inicial era incorrecta.
+
+El backend de `COLLECTABLE-FIRST-TUTORIAL` está preparado y probado por separado;
+el panel no está activado en el pickup porque sus controles y pausa nativos
+siguen pendientes. Estado y alcance en
+[PENDING_XBOX360_FIDELITY.md](PENDING_XBOX360_FIDELITY.md) y
+[contrato original](localization-audit/first-collectable-tutorial.md).
 
 ## Película inicial: discontinuidad negra demostrada
 

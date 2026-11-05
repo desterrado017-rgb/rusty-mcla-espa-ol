@@ -1,11 +1,17 @@
 # Revisión independiente de coleccionables y transición de apertura
 
+> Errata posterior: el informe original acredita el marcador
+> `<D>NUM_COLLECTABLE_COLLECTED</D>`. La variante con espacios de esta revisión
+> histórica era incorrecta; se corrigió en `05c25f6`. Véase
+> [el contrato actualizado](first-collectable-tutorial.md).
+
+
 Base: `5c740ad2c0c29528193ecd16fc6dfa4ecb4e1348`.
 Revisión de fuentes y diff, sin compilar ni ejecutar el juego y sin acceder a partidas ni recursos originales. Este revisor no escribe fuentes. Los resultados de ejecución de pruebas los coordina el agente principal.
 
 ## Coleccionables
 
-`collectable_text::found_message` resuelve la misma clave de `StringTable` y reemplaza únicamente la variable exacta `<D>NUM COLLECTABLE COLLECTED</D>`. El marcador procede del informe del usuario; su sintaxis y tratamiento por consumidor concuerdan con `mc4b::fill_d` y las sustituciones nombradas de dinero y reputación existentes. No se ha supuesto un denominador ni una frase española original.
+`collectable_text::found_message` resuelve la misma clave de `StringTable` y en aquella base reemplazaba el token supuesto con espacios, posteriormente demostrado incorrecto. La corrección `05c25f6` utiliza `<D>NUM_COLLECTABLE_COLLECTED</D>`. El tratamiento por consumidor concuerda con `mc4b::fill_d` y las sustituciones nombradas de dinero y reputación existentes. No se ha supuesto un denominador ni una frase española original.
 
 La rama con recurso deja de añadir el contador exterior; una plantilla sin la variable se mantiene intacta. Las variables ajenas y los marcadores incompletos se preservan, evitando tratar los tags como HTML para borrarlos. El respaldo sin recurso conserva el mensaje inglés anterior completo. La selección de idioma y los respaldos por clave pertenecen a la `StringTable` existente, no se reimplementan en el helper.
 

@@ -1,6 +1,12 @@
 # Coleccionables: marcador dinámico y contador duplicado
 
-Base examinada: `5c740ad2c0c29528193ecd16fc6dfa4ecb4e1348`, rama `feature/spanish-ui-completion-v0.14.0`. La plantilla española real no está disponible en el checkout. El marcador exacto `<D>NUM COLLECTABLE COLLECTED</D>` procede del informe del usuario; las pruebas solo contienen centinelas sintéticos.
+> Errata posterior: el informe original acredita el marcador
+> `<D>NUM_COLLECTABLE_COLLECTED</D>`. La variante con espacios de esta revisión
+> histórica era incorrecta; se corrigió en `05c25f6`. Véase
+> [el contrato actualizado](first-collectable-tutorial.md).
+
+
+Base examinada: `5c740ad2c0c29528193ecd16fc6dfa4ecb4e1348`, rama `feature/spanish-ui-completion-v0.14.0`. La plantilla española real no está disponible en el checkout. Esta revisión inicial usó el token supuesto con espacios y pruebas sintéticas. El informe original posterior lo desmintió; el token auténtico con guiones bajos y los fixtures originales reducidos están documentados en el contrato actualizado.
 
 ## Causa demostrada
 
@@ -21,7 +27,7 @@ Esta evidencia y el marcador reportado demuestran que el número de coleccionabl
 Nuevo `game/src/collectable_text.rs::found_message`:
 
 - Lee la misma clave con `StringTable::get`, conservando selección de idioma y fallback inglés existente por clave.
-- Si hay recurso, sustituye solo el marcador exacto `<D>NUM COLLECTABLE COLLECTED</D>` por el número de elementos ya recogidos. Sustituye sus apariciones por la misma variable; conserva prefijos, sufijos, denominadores, saltos, acentos, otros marcadores y cualquier plantilla sin ese marcador.
+- La versión inicial sustituía un token supuesto con espacios, lo que no resolvía la variable real. La versión corregida en `05c25f6` sustituye únicamente `<D>NUM_COLLECTABLE_COLLECTED</D>`, conservando prefijos, sufijos, denominadores, saltos, acentos y otras variables.
 - No añade otro contador a una plantilla oficial. Tampoco intenta eliminar todos los tags como si fueran HTML.
 - Si la clave no existe, conserva exactamente el fallback inglés anterior del port: `COLLECTABLE FOUND   n / total`.
 

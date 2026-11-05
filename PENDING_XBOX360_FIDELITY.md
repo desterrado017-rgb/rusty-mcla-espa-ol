@@ -2,29 +2,37 @@
 
 ## COLLECTABLE-FIRST-TUTORIAL — aviso del primer coleccionable
 
-**Prioridad:** alta. **Base:** `48d2792ab84904dbfe3e5071d53f2bb0ad4afadb`.
-**Estado:** registrado e investigado; implementación y pruebas nuevas pendientes
-de verificar el script original y sus recursos. No está resuelto por la
-corrección del marcador dinámico.
+**Prioridad:** alta. **Base de esta continuación:** `df1671b`.
+**Estado:** marcador auténtico corregido; backend de disparador, visibilidad y
+persistencia implementado para pruebas. **Panel todavía no activado en la
+recogida:** faltan los controles y la pausa nativos y el adaptador de App.
 
-Comportamiento solicitado para Midnight Club: Los Angeles Complete Edition:
+El informe original aportado por el usuario acredita el formulario **94**, las
+claves `tutorial_collectables_title` / `tutorial_collectables_desc`, la condición
+`xTCO == 0` y las exclusiones de tutoriales/red/conexión/editor. Tras cerrarse el
+formulario: `xTCO = 1` → `CAREER_AUTOSAVE` → progreso normal.
 
-1. En la primera recogida (1/60), presentar el tutorial original «COLLECTABLES»
-   sobre el desbloqueo de trucos, con su diseño y controles originales.
-2. En las posteriores (2/60, 3/60, etc.), presentar solo el progreso normal.
-3. Obtener todo texto oficial de los recursos originales españoles, conservando
-   el inglés y el respaldo por clave. No redactar una traducción del tutorial.
-4. Reproducir las condiciones y persistencia de `Game/MiscTasks/Collectables`.
-   No repetir un tutorial ya mostrado ni migrar partidas por suposición.
-5. Mantener `collectable_text::found_message`, las 120 entradas, Henry y las
-   correcciones anteriores. No modificar recursos ni publicar un ejecutable.
+`xTCO` no es `gCOL` ni depende de `collected.len() == 1`. La interpretación anterior
+como indicador de todos los coleccionables encontrados queda corregida. El token
+real de progreso es `<D>NUM_COLLECTABLE_COLLECTED</D>`; la variante con espacios
+que usaba el port era incorrecta y se corrigió en `05c25f6`.
 
-Ya están identificados el formulario **94** y las claves
-`tutorial_collectables_title` / `tutorial_collectables_desc`. Falta acreditar
-su disparador, estado persistente, cierre, pausa y secuencia con el progreso.
-Asignar directamente `tutorial_box` no reproduce automáticamente sus controles.
+La parte preparada comprende estado transitorio, consulta inmediata de visibilidad
+y reconsultas cada 100 ms, resultado de cierre, asignación de la estadística real,
+petición de autoguardado y progreso posterior. El payload Flash toma sus textos
+originales de StringTable. No se introduce un bool guardado ni una migración.
 
-El [informe de investigación y matriz de pruebas](localization-audit/first-collectable-tutorial.md)
-detalla los hallazgos y archivos necesarios. La tarea no se cerrará hasta probar
-primera recogida, recogidas posteriores y carga de partida conforme al contrato
-original, y validar visualmente el panel y sus controles en Windows.
+El usuario confirmó que no dispone aún de evidencia del botón de cierre ni de la
+pausa. Por eso quedan pendientes:
+
+1. Verificar entradas, cierre y pausa del formulario nativo 94 mediante código
+   original o una observación Xbox 360/Xenia con pulsaciones y simulación visibles.
+2. Conectar la recogida al backend y al formulario real con esa política verificada,
+   conservando la actualización de `gCOL` y el estado local previos al panel,
+   enlazando `CAREER_AUTOSAVE` al guardado existente y conservando sus restricciones.
+3. Reproducir y validar visualmente primera recogida elegible, posteriores, carga,
+   supresiones y avisos de trucos en los hitos correspondientes.
+
+[Contrato, implementación, pruebas y límites](localization-audit/first-collectable-tutorial.md).
+La tarea sigue abierta. Se conservan las 120 entradas, Henry, la transición inicial,
+recursos y partidas. No se publica un ejecutable.
