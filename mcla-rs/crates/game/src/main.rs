@@ -24,6 +24,7 @@ mod camera;
 mod citymap;
 mod career;
 mod collectable_text;
+mod opening_diag;
 mod localization;
 mod port_text;
 mod catalog;
@@ -2852,6 +2853,7 @@ impl App {
         let t_stream = Instant::now();
         crate::ticktimes::mark(crate::ticktimes::S::World);
         world.update(&mut gpu, focus, 6.0);
+        opening_diag::stream_focus(self.frame_no, self.intro_stage, focus, &world);
         crate::ticktimes::mark(crate::ticktimes::S::Other);
         self.fl_stream_ms += t_stream.elapsed().as_secs_f32() * 1000.0;
         // special abilities (real time); Zone slows the whole simulation down
@@ -9688,6 +9690,14 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
             let (eye, view) = if self.drive && self.vehicles.player().is_some() { (self.chase.pos, self.chase.view()) } else { (self.cam.pos, self.cam.view()) };
             let axis = -Vec3::new(view.x_axis.z, view.y_axis.z, view.z_axis.z);
             self.vehicles.pick_lods(eye, axis, self.lod_near, crate::props::Lod::now(), &frustum, &occluded);
+            if opening_diag::enabled() {
+                opening_diag::render(self.frame_no, self.intro_stage, opening_diag::View {
+                    eye, direction: axis, fov_y: self.cam.fov_y, near: self.cam.near,
+                    lod_near: self.lod_near, viewport: [gpu.scene_w, gpu.scene_h], vp_finite: vp.is_finite(),
+                    selection_candidate: self.sel_cam.map(|(eye, look, ..)| (eye, look)),
+                    cinematic: self.cine.playing.is_some(),
+                }, &self.vehicles, &world, &frustum, &occluded);
+            }
             if rival_diag::enabled() && self.frame_no % 60 == 0 && self.game.career.mission_active(rival_diag::MISSION) {
                 rival_diag::sample_grid(&self.game, &self.vehicles, "render", self.cine.playing.as_ref().map_or("", |s| s.name.as_str()), Some(&world));
             }
@@ -12995,6 +13005,7 @@ impl App {
     /// The new career's opening after the save boxes (CarSelection, `intro_stage`): every tick, the film and
     /// the scenes included.
     fn opening_tick(&mut self, dt: f32, streaming: usize) {
+        let stage_before = self.intro_stage;
         self.intro_t += dt;
         // (VEHICLE SELECT's loop: one step of the camera function at 0x1069 toward the car under the cursor, then
         // WAITUNWARPED(30))
@@ -13080,6 +13091,22 @@ impl App {
         let over_black = self.game.movie.is_some() || (self.intro_stage == 2 && self.cuts.playing.is_some());
         self.game.intro_mask = if over_black { 0.0 } else { self.intro_mask.update(dt) };
         self.game.opening_black = self.intro_stage == 4 || (self.intro_stage == 3 && !self.game.fresh_game);
+        if opening_diag::enabled() && (stage_before != 0 || self.intro_stage != 0) {
+            let flags = (self.game.movie.is_some() as u16)
+                | ((self.cuts.idle() as u16) << 1) | (((streaming == 0) as u16) << 2)
+                | ((self.intro_mask.full() as u16) << 3) | ((self.game.hold_starter as u16) << 4)
+                | ((self.game.fresh_game as u16) << 5) | ((self.game.opening_black as u16) << 6)
+                | ((self.game.starter_pick.map_or(0, |k| k as u16 + 1) & 3) << 7);
+            opening_diag::state(self.intro_stage, flags, format_args!(
+                "version={} sha={} frame={} tick={} stage_before={} stage={} t={} dt={} movie={} movie_t={:?} movie_duration={:?} cuts_idle={} cine={} pending={} mask_full={} mask_on={} ui_mask={} over_black={} opening_black={} hold_starter={} fresh_game={} starter_pick={:?} starters_made={} start_warp={}",
+                env!("CARGO_PKG_VERSION"), option_env!("GITHUB_SHA").unwrap_or("unrecorded"),
+                self.frame_no, self.tick_no, stage_before, self.intro_stage, self.intro_t, dt,
+                self.game.movie.is_some(), self.game.movie.as_ref().map(|m| m.time()),
+                self.game.movie.as_ref().map(|m| m.duration()), self.cuts.idle(), self.cine.playing.is_some(),
+                streaming, self.intro_mask.full(), self.intro_mask.is_on(), self.game.intro_mask,
+                over_black, self.game.opening_black, self.game.hold_starter, self.game.fresh_game,
+                self.game.starter_pick, self.starters_made, self.startwarp.is_some()));
+        }
     }
 
     /// The cine scenes' lamp switches (vehicles.rs `CINE_LAMP_EVENTS`): at a scene's start every car's switch

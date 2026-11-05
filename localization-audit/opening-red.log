@@ -1,0 +1,26 @@
+
+running 4 tests
+test game::tests::opening_movie_eof_keeps_black_until_the_transition_tick ... FAILED
+test game::tests::opening_movie_handoff_does_not_cover_other_movies_or_existing_careers ... ok
+test game::tests::opening_movie_handoff_leaves_a_live_movie_and_no_movie_unchanged ... ok
+test game::tests::opening_movie_skip_keeps_black_until_the_transition_tick ... FAILED
+
+failures:
+
+---- game::tests::opening_movie_eof_keeps_black_until_the_transition_tick stdout ----
+
+thread 'game::tests::opening_movie_eof_keeps_black_until_the_transition_tick' (29379) panicked at crates/game/src/game.rs:15290:9:
+Complete: the ending frame exposed the city before the transition tick
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- game::tests::opening_movie_skip_keeps_black_until_the_transition_tick stdout ----
+
+thread 'game::tests::opening_movie_skip_keeps_black_until_the_transition_tick' (29382) panicked at crates/game/src/game.rs:15290:9:
+Skipped: the ending frame exposed the city before the transition tick
+
+
+failures:
+    game::tests::opening_movie_eof_keeps_black_until_the_transition_tick
+    game::tests::opening_movie_skip_keeps_black_until_the_transition_tick
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 954 filtered out; finished in 0.01s

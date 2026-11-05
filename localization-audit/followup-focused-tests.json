@@ -1,0 +1,257 @@
+[
+  {
+    "test": "glyphs::tests::keyboard_labels_follow_language_while_key_tokens_stay_unchanged",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "glyphs::tests::localized_keyboard_labels_preserve_pad_prompts_and_button_names",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "glyphs::tests::prompts_follow_the_device",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::alt_enter_events",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::backtrace_starts_at_the_panic",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::crash_report_names_what_a_bug_report_needs",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::fps_meter_averages_presented_frames",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::frame_wait_holds_the_period",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::gpu_failure_says_why",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::intro_modes",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::intro_notice_and_disabled_dead_zone_use_the_selected_language",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::monitor_numbering",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::old_logs_are_pruned_oldest_first",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::port_option_values_follow_language_without_changing_config_words",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::screenshot_names_do_not_collide",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::spanish_gpu_error_preserves_driver_details_and_log_path",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "hooks::tests::timestamp_has_the_documented_shape",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "keybinds::tests::keyboard_adapter_codes_match_the_model",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "keybinds::tests::keyboard_defaults_are_the_old_keys",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "keybinds::tests::keyboard_field_written_by_the_launcher_is_the_games",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "keybinds::tests::keyboard_rebinding_conflicts_reserved",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "keybinds::tests::keyboard_save_round_trip",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "localization::tests::english_only_and_missing_data_are_safe",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "localization::tests::language_is_selected_after_south_central_and_tip_tables_are_merged",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "localization::tests::missing_main_table_does_not_hide_dlc_spanish",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "port_text::rendering_tests::in_game_port_text_has_glyphs_in_the_existing_bitmap_fallback",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "port_text::tests::both_languages_cover_the_catalog_and_keep_dynamic_fields",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "port_text::tests::key_labels_only_change_presentation_and_preserve_all_saved_key_names",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "port_text::tests::language_changes_port_labels_without_translating_technical_names",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "video::tests::movie_subtitles_keep_the_original_time_intervals_and_empty_track",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "video::tests::movie_subtitles_respect_the_option_without_changing_the_track",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "flash_ui::tests::hangout_money_label_uses_original_key_and_keeps_override_and_fallback",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "flash_ui::tests::fscommand_keeps_language_and_reads_selected_table_without_game_resources",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "mc4::tests::controller_pages_present_both_languages_without_changing_bindings",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "mc4::tests::keyboard_actions_keep_english_labels_and_select_original_spanish_resources",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "mc4::tests::subtitle_preferences_survive_options_import_export_in_both_languages",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "mc4::tests::importing_options_keeps_selected_language_and_save_language_unchanged",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "mc4::tests::keyboard_page_session",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "offroad::tests::navigation_mesh_uses_runtime_root_without_raw_data_argument",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "roamers::tests::first_mission_requests_the_same_rival_after_its_scene_in_both_languages",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "rival_diag::tests::first_rival_trace_reports_reentry_after_a_gate_changes",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "collectable_text::tests::absent_resources_preserve_the_previous_english_port_fallback",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "collectable_text::tests::missing_spanish_key_keeps_the_existing_english_resource_fallback",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "collectable_text::tests::only_the_named_count_is_replaced_and_resource_layout_is_preserved",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "collectable_text::tests::original_language_template_gets_one_count_without_an_appended_counter",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "game::tests::opening_movie_eof_keeps_black_until_the_transition_tick",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "game::tests::opening_movie_handoff_does_not_cover_other_movies_or_existing_careers",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "game::tests::opening_movie_handoff_leaves_a_live_movie_and_no_movie_unchanged",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "game::tests::opening_movie_input_preserves_skip_and_attract_key_rules",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "game::tests::opening_movie_skip_keeps_black_until_the_transition_tick",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  },
+  {
+    "test": "opening_diag::tests::opening_observations_only_repeat_on_state_changes_or_sixty_frames",
+    "exit_code": 0,
+    "actually_ran_and_passed": true
+  }
+]

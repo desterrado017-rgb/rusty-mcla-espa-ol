@@ -4654,6 +4654,58 @@ impl Game {
         self.nav_y || ctx.input(|i| i.key_pressed(egui::Key::Y))
     }
 
+    fn transition_masks_ui(&self, ctx: &egui::Context) {
+        // a garage entry's black (TRANSITIONMOVIE, mask_color 0) over everything
+        if self.place_mask.max(self.title_mask).max(self.intro_mask) > 0.0 {
+            let layer = egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("place_mask"));
+            ctx.move_to_top(layer);
+            ctx.layer_painter(layer).rect_filled(ctx.screen_rect(), 0.0, egui::Color32::from_black_alpha((self.place_mask.max(self.title_mask).max(self.intro_mask).clamp(0.0, 1.0) * 255.0).round() as u8));
+        }
+    }
+
+    /// The movie owns the UI for this frame, including its last frame. Kept separate
+    /// from world/vehicle presentation so its handoff can be tested without game data.
+    fn movie_ui(&mut self, ctx: &egui::Context) -> bool {
+        let Some(mut m) = self.movie.take() else { return false };
+        let enter = std::mem::take(&mut self.nav_enter);
+        // (the opening film: CarSelection's loop polls START, A and Y - IS_BUTTON_DOWN 11 / 6 / 4 - once
+        // TIMERA > 1 ms, and fades it out before it stops; B does nothing. The keyboard's Esc is START.)
+        let (y, start, esc) = (std::mem::take(&mut self.nav_y), std::mem::take(&mut self.nav_start), std::mem::take(&mut self.nav_back));
+        if !m.any_key && (enter || y || start || esc) {
+            crate::opening_diag::event("movie-skip-request", format_args!("t={:.3} duration={:.3} fresh_game={} hold_starter={} mask={:.3}", m.time(), m.duration(), self.fresh_game, self.hold_starter, self.intro_mask));
+            m.skip();
+        }
+        if !(m.any_key && enter) && m.show(ctx) {
+            // subtitles of the opening movie
+            let screen = ctx.screen_rect();
+            let sc = (screen.height() / 900.0).clamp(0.5, 2.0);
+            let p = ctx.layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("movie subs")));
+            if let Some(sub) = m.subtitle(self.opts.subtitles) {
+                let lines = self.wrap(sub, 15.0 * sc, screen.width() * 0.8);
+                for (i, l) in lines.iter().enumerate() {
+                    let pos = egui::pos2(screen.center().x, screen.bottom() - 70.0 * sc + (i as f32 - (lines.len() as f32 - 1.0) * 0.5) * 24.0 * sc);
+                    self.text(&p, pos + egui::vec2(1.5, 1.5), egui::Align2::CENTER_CENTER, l, 15.0 * sc, egui::Color32::BLACK);
+                    self.text(&p, pos, egui::Align2::CENTER_CENTER, l, 15.0 * sc, egui::Color32::WHITE);
+                }
+            }
+            if m.time() < 4.0 && m.any_key {
+                self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + 30.0 * sc), egui::Align2::RIGHT_CENTER, port_text(PortText::PressAnyKey), 9.0 * sc, egui::Color32::from_gray(150));
+            }
+            self.movie = Some(m);
+        } else {
+            crate::opening_diag::event("movie-end", format_args!("t={:.3} duration={:.3} skip_requested={} any_key={} enter={} fresh_game={} hold_starter={} mask={:.3}", m.time(), m.duration(), m.skip_requested(), m.any_key, enter, self.fresh_game, self.hold_starter, self.intro_mask));
+            self.movie_done = true;
+            if self.fresh_game && self.hold_starter && self.mode == Mode::FreeRoam && !m.any_key {
+                // The opening tick keeps its CutMask fully black throughout the film.
+                // Preserve that held mask in this UI frame (and renders without a tick)
+                // until the next opening tick resumes the normal streaming/fade decision.
+                self.intro_mask = 1.0;
+                self.transition_masks_ui(ctx);
+            }
+        }
+        true
+    }
+
     fn ui_screens(&mut self, ctx: &egui::Context, vehicles: &Vehicles, world: &World, hud: HudInfo) -> MenuAction {
         let race_dt = std::mem::take(&mut self.ui_sim_dt);
         self.load_ui(ctx);
@@ -4732,34 +4784,7 @@ impl Game {
             }
             return MenuAction::None;
         }
-        if let Some(mut m) = self.movie.take() {
-            let enter = std::mem::take(&mut self.nav_enter);
-            // (the opening film: CarSelection's loop polls START, A and Y - IS_BUTTON_DOWN 11 / 6 / 4 - once
-            // TIMERA > 1 ms, and fades it out before it stops; B does nothing. The keyboard's Esc is START.)
-            let (y, start, esc) = (std::mem::take(&mut self.nav_y), std::mem::take(&mut self.nav_start), std::mem::take(&mut self.nav_back));
-            if !m.any_key && (enter || y || start || esc) {
-                m.skip();
-            }
-            if !(m.any_key && enter) && m.show(ctx) {
-                // subtitles of the opening movie
-                let screen = ctx.screen_rect();
-                let sc = (screen.height() / 900.0).clamp(0.5, 2.0);
-                let p = ctx.layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("movie subs")));
-                if let Some(sub) = m.subtitle(self.opts.subtitles) {
-                    let lines = self.wrap(sub, 15.0 * sc, screen.width() * 0.8);
-                    for (i, l) in lines.iter().enumerate() {
-                        let pos = egui::pos2(screen.center().x, screen.bottom() - 70.0 * sc + (i as f32 - (lines.len() as f32 - 1.0) * 0.5) * 24.0 * sc);
-                        self.text(&p, pos + egui::vec2(1.5, 1.5), egui::Align2::CENTER_CENTER, l, 15.0 * sc, egui::Color32::BLACK);
-                        self.text(&p, pos, egui::Align2::CENTER_CENTER, l, 15.0 * sc, egui::Color32::WHITE);
-                    }
-                }
-                if m.time() < 4.0 && m.any_key {
-                    self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + 30.0 * sc), egui::Align2::RIGHT_CENTER, port_text(PortText::PressAnyKey), 9.0 * sc, egui::Color32::from_gray(150));
-                }
-                self.movie = Some(m);
-            } else {
-                self.movie_done = true;
-            }
+        if self.movie_ui(ctx) {
             return MenuAction::None;
         }
         let mut action = MenuAction::None;
@@ -10026,12 +10051,7 @@ impl Game {
                 }
             }
         }
-        // a garage entry's black (TRANSITIONMOVIE, mask_color 0) over everything
-        if self.place_mask.max(self.title_mask).max(self.intro_mask) > 0.0 {
-            let layer = egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("place_mask"));
-            ctx.move_to_top(layer);
-            ctx.layer_painter(layer).rect_filled(ctx.screen_rect(), 0.0, egui::Color32::from_black_alpha((self.place_mask.max(self.title_mask).max(self.intro_mask).clamp(0.0, 1.0) * 255.0).round() as u8));
-        }
+        self.transition_masks_ui(ctx);
         self.message_timer = (self.message_timer - ctx.input(|i| i.stable_dt)).max(0.0);
         action
     }
@@ -15244,6 +15264,134 @@ mod ui_original_tests;
 #[cfg(test)]
 mod tests {
     use super::Game;
+
+    fn movie_ui_frame(game: &mut Game, context: &egui::Context) -> egui::FullOutput {
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1280.0, 720.0));
+        context.run(egui::RawInput { screen_rect: Some(screen), ..Default::default() }, |ctx| {
+            if !game.movie_ui(ctx) {
+                // The normal UI path paints this mask when there is no movie.
+                game.transition_masks_ui(ctx);
+            }
+        })
+    }
+
+    fn has_full_black(output: &egui::FullOutput) -> bool {
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1280.0, 720.0));
+        output.shapes.iter().any(|shape| match &shape.shape {
+            egui::Shape::Rect(rect) => rect.fill == egui::Color32::BLACK && rect.rect.contains_rect(screen) && shape.clip_rect.contains_rect(screen),
+            _ => false,
+        })
+    }
+
+    fn opening_movie_end_holds_black(playback: crate::video::test_support::Playback) {
+        let context = egui::Context::default();
+        let mut game = Game::new(Vec::new(), 0);
+        game.mode = super::Mode::FreeRoam;
+        game.fresh_game = true;
+        game.hold_starter = true;
+        // The previous tick suppressed the public mask while Video drew its own background.
+        game.intro_mask = 0.0;
+        game.movie = Some(crate::video::test_support::movie(playback, false));
+        let end_frame = movie_ui_frame(&mut game, &context);
+        assert!(game.movie.is_none() && game.movie_done);
+        assert!(has_full_black(&end_frame), "{playback:?}: the ending frame exposed the city before the transition tick");
+        assert_eq!(game.intro_mask, 1.0, "the held mask must remain available on frames with no simulation tick");
+        // Several UI renders may run before the next 60 Hz simulation tick.
+        for _ in 0..3 {
+            assert!(has_full_black(&movie_ui_frame(&mut game, &context)));
+        }
+        // The next opening tick remains authoritative: its normal fade value is respected.
+        game.intro_mask = 0.6;
+        game.hold_starter = false;
+        let released = movie_ui_frame(&mut game, &context);
+        assert!(!has_full_black(&released));
+        assert_eq!(game.intro_mask, 0.6);
+    }
+
+    #[test]
+    fn opening_movie_eof_keeps_black_until_the_transition_tick() {
+        opening_movie_end_holds_black(crate::video::test_support::Playback::Complete);
+    }
+
+    #[test]
+    fn opening_movie_skip_keeps_black_until_the_transition_tick() {
+        opening_movie_end_holds_black(crate::video::test_support::Playback::Skipped);
+    }
+
+    #[test]
+    fn opening_movie_handoff_does_not_cover_other_movies_or_existing_careers() {
+        use crate::video::test_support::{movie, Playback};
+        for (fresh, held, any_key, mode) in [
+            (false, true, false, super::Mode::FreeRoam),
+            (true, false, false, super::Mode::FreeRoam),
+            (true, true, true, super::Mode::MainMenu),
+            (true, true, true, super::Mode::FreeRoam),
+            (true, true, false, super::Mode::MainMenu),
+        ] {
+            for playback in [Playback::Complete, Playback::Skipped] {
+                let context = egui::Context::default();
+                let mut game = Game::new(Vec::new(), 0);
+                game.mode = mode;
+                game.fresh_game = fresh;
+                game.hold_starter = held;
+                game.movie = Some(movie(playback, any_key));
+                assert!(!has_full_black(&movie_ui_frame(&mut game, &context)));
+                assert!(game.movie.is_none() && game.movie_done);
+                assert_eq!(game.intro_mask, 0.0);
+            }
+        }
+    }
+
+    #[test]
+    fn opening_movie_handoff_leaves_a_live_movie_and_no_movie_unchanged() {
+        use crate::video::test_support::{movie, Playback};
+        let context = egui::Context::default();
+        let mut game = Game::new(Vec::new(), 0);
+        game.mode = super::Mode::FreeRoam;
+        game.fresh_game = true;
+        game.hold_starter = true;
+        game.movie = Some(movie(Playback::Live, false));
+        assert!(has_full_black(&movie_ui_frame(&mut game, &context))); // Video's own background
+        assert!(game.movie.is_some() && !game.movie_done);
+        assert_eq!(game.intro_mask, 0.0);
+        game.movie = None;
+        assert!(!has_full_black(&movie_ui_frame(&mut game, &context)));
+        assert!(!game.movie_done && game.intro_mask == 0.0);
+    }
+
+    #[test]
+    fn opening_movie_input_preserves_skip_and_attract_key_rules() {
+        use crate::video::test_support::{movie, Playback};
+        for key in ["enter", "y", "start", "back"] {
+            let context = egui::Context::default();
+            let mut game = Game::new(Vec::new(), 0);
+            game.mode = super::Mode::FreeRoam;
+            game.fresh_game = true;
+            game.hold_starter = true;
+            game.movie = Some(movie(Playback::Live, false));
+            match key {
+                "enter" => game.nav_enter = true,
+                "y" => game.nav_y = true,
+                "start" => game.nav_start = true,
+                "back" => game.nav_back = true,
+                _ => unreachable!(),
+            }
+            movie_ui_frame(&mut game, &context);
+            assert!(game.movie.as_ref().is_some_and(|movie| movie.skip_requested()), "{key} must request the existing movie fade");
+            assert!(!game.movie_done && game.intro_mask == 0.0);
+            assert!(!game.nav_enter && !game.nav_y && !game.nav_start && !game.nav_back);
+        }
+        let context = egui::Context::default();
+        let mut game = Game::new(Vec::new(), 0);
+        game.mode = super::Mode::FreeRoam;
+        game.fresh_game = true;
+        game.hold_starter = true;
+        game.movie = Some(movie(Playback::Live, true));
+        game.nav_enter = true;
+        assert!(!has_full_black(&movie_ui_frame(&mut game, &context)));
+        assert!(game.movie.is_none() && game.movie_done && !game.nav_enter);
+        assert_eq!(game.intro_mask, 0.0, "the attract input path must not get an opening handoff mask");
+    }
 
     /// MODS.md M-8: with `hide_empty_parts` a part kind or a list of XPARTS stays only when the car has it; other rows stay.
     #[test]

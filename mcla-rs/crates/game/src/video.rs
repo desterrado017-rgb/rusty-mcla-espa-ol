@@ -93,6 +93,11 @@ impl Video {
         self.skipped.get_or_insert_with(Instant::now);
     }
 
+    /// Observational state for transition diagnostics; it does not advance the fade.
+    pub fn skip_requested(&self) -> bool {
+        self.skipped.is_some()
+    }
+
     /// Draw the frame for the current time over the whole screen; false when the movie is over.
     pub fn show(&mut self, ctx: &egui::Context) -> bool {
         let i = (self.time() * self.fps) as usize;
@@ -130,6 +135,49 @@ fn select_subtitle(subs: &[(f32, f32, String)], t: f32, enabled: bool) -> Option
         return None;
     }
     subs.iter().find(|s| t >= s.0 && t < s.1).map(|s| s.2.as_str())
+}
+
+#[cfg(test)]
+pub(crate) mod test_support {
+    use super::*;
+
+    #[derive(Clone, Copy, Debug)]
+    pub enum Playback {
+        Live,
+        Complete,
+        Skipped,
+    }
+
+    /// A one-frame synthetic MCV track in anonymous memory: no JPEG, original
+    /// movie, resource directory, filesystem fixture or sleep is required.
+    pub fn movie(playback: Playback, any_key: bool) -> Video {
+        let mut bytes = Vec::from(&b"MCV1"[..]);
+        for word in [1u32, 1, 1, 1] { // width, height, 0.001 FPS, one frame
+            bytes.extend(word.to_le_bytes());
+        }
+        for offset in [36u64, 36] {
+            bytes.extend(offset.to_le_bytes());
+        }
+        let mut data = memmap2::MmapMut::map_anon(bytes.len()).unwrap();
+        data.copy_from_slice(&bytes);
+        let now = Instant::now();
+        Video {
+            data: std::sync::Arc::new(data.make_read_only().unwrap()),
+            ahead: None,
+            width: 1,
+            height: 1,
+            fps: 0.001,
+            frames: 1,
+            start: now,
+            offset: if matches!(playback, Playback::Complete) { 2000.0 } else { 0.0 },
+            shown: None,
+            tex: None,
+            subs: Vec::new(),
+            any_key,
+            audio: PathBuf::new(),
+            skipped: matches!(playback, Playback::Skipped).then(|| now - std::time::Duration::from_secs(1)),
+        }
+    }
 }
 
 #[cfg(test)]
