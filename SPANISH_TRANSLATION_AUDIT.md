@@ -81,6 +81,11 @@ Los identificadores de teclas, nombres físicos de botones del mando, códigos d
 - **Idioma Flash:** el host genérico respondía `lang=0` aunque el cargador hubiera seleccionado español. Una película sintética que ejecuta la llamada muestra el defecto; la corrección conserva el idioma suministrado y la ruta de juego responde desde la StringTable seleccionada. No se reescribe el contenido de las películas.
 - **Etiqueta de dinero:** una ruta de Hangout usaba `MONEY` directamente; ahora reutiliza `G_Money` de la tabla original, conservando el override diagnóstico y el fallback exacto si falta la clave.
 - **Preferencia de subtítulos en intro:** la película inicial mostraba la pista sin consultar la opción guardada. El control de presentación ahora recibe esa preferencia. El predeterminado, la lectura/escritura de partidas y el texto/tiempo de los CSV permanecen intactos.
+
+El predeterminado de subtítulos sigue siendo **`false`** en las dos estructuras
+de opciones. La corrección solo respeta la preferencia existente. **No demuestra
+disponibilidad de subtítulos españoles**: los CSV originales no se han inspeccionado.
+
 - **Reservas de interfaces originales:** resúmenes de Career, `RaceDef::title`, categorías/variantes de piezas, tipos de pintura y zonas de vinilos contienen inglés ensamblado. La auditoría demuestra sus consumidores y si solo se ven al fallar/no usar la película original. No se han traducido manualmente: requieren identificar las claves originales pertinentes.
 - **Banderas offline:** la IA offline es una adición del port, pero los modos y objetivos proceden del multijugador original. Esa adición no demuestra que todo el texto sea nuevo. Sus frases quedan pendientes de contrastar con recursos.
 - **Texto usado como estado:** banderas prioriza `GET`/`STOP`; un sonido detecta ganador con `YOU`. Traducir esas cadenas directamente puede cambiar lógica. Debe separarse el estado de la presentación antes de intervenir; esta entrega no altera esa lógica.
@@ -164,3 +169,8 @@ inventarios; catálogo/adaptadores y correcciones demostradas de presentación;
 pruebas focalizadas y resultados. Este informe describe ese conjunto. Los SHA
 exactos se proporcionan en la entrega y en el historial de la rama independiente.
 No se fusiona con estable ni se publica un ejecutable nuevo.
+
+El seguimiento posterior a `5c740ad` de marcadores de coleccionables, traspaso de
+la película inicial y nuevas regresiones está en
+[SPANISH_UI_FOLLOWUP.md](SPANISH_UI_FOLLOWUP.md). Los resultados de esta auditoría
+describen su revisión inicial; el seguimiento registra las comprobaciones nuevas.

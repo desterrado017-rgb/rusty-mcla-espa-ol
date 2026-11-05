@@ -75,6 +75,11 @@ interfaz corrige la película inicial para respetar la opción de subtítulos ya
 cargada, como las escenas de historia. No cambia su valor predeterminado ni su
 persistencia. La opción controla la visualización, no la localización del CSV.
 
+El valor predeterminado de los subtítulos sigue siendo **`false`** tanto en
+`game::Options` como en `mc4::Options`. La corrección solo hace respetar la
+preferencia ya cargada; no activa subtítulos automáticamente ni demuestra que
+existan subtítulos españoles. Eso requiere inspeccionar los CSV originales.
+
 No hay en el checkout los CSV originales, las tablas extraídas ni la ISO. Por
 tanto no se ha podido comprobar dónde están los subtítulos españoles originales,
 si son columnas, archivos alternativos o claves de otro recurso. No se cambia

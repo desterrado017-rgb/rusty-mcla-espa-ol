@@ -1,0 +1,38 @@
+{
+  "base_commit": "5c740ad2c0c29528193ecd16fc6dfa4ecb4e1348",
+  "official_v0_14_0_commit": "30d8b1f3b54557664d81bb7cfc9cc33caea53647",
+  "scope": "Source comparison before the follow-up corrections; no visual or original-resource validation.",
+  "comparisons": [
+    {
+      "item": "opening_tick",
+      "identical_to_official": true,
+      "sha256": "bbde223a5f65f1c1d620d1ebcf844cba517909ed8eb76bc9b0bfecdeb1fa51ce"
+    },
+    {
+      "item": "sel_cam_step",
+      "identical_to_official": true,
+      "sha256": "de5ebd88293ece73bf1535f447c2ef508d53d03fd75c0c2b99d450d896870caa"
+    },
+    {
+      "item": "selection camera constants",
+      "identical_to_official": true,
+      "sha256": "9b8409e9c5d53efd9ea9c37eea2a92e1418fcba4371bc8197747c26711189e4e"
+    },
+    {
+      "item": "mcla-rs/crates/game/src/video.rs",
+      "identical_to_official": false
+    },
+    {
+      "item": "mcla-rs/crates/game/src/world.rs",
+      "identical_to_official": true
+    },
+    {
+      "item": "mcla-rs/crates/game/src/camera.rs",
+      "identical_to_official": true
+    },
+    {
+      "item": "mcla-rs/crates/game/src/boomcam.rs",
+      "identical_to_official": true
+    }
+  ]
+}
