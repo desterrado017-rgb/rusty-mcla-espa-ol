@@ -1648,14 +1648,18 @@ pub fn measure_string(movie: &Movie, font: &str, s: &str, size: f32) -> f32 {
     em / 1024.0 * size
 }
 
-/// FSCommands every host answers the same way: `getvar` of the platform
-/// constants and `MeasureString`. Returns false for anything else.
+/// Common FSCommands: `getvar` of platform constants and the host's configured
+/// language (English if unset), and `MeasureString`. Returns false for anything else.
 pub fn common_fscommand(p: &mut Player, cmd: &str, arg: &str) -> bool {
     match cmd.to_ascii_lowercase().as_str() {
         "getvar" => match arg {
             "aspect" => p.set_global("aspect", Value::Int(1)),
             "platform" => p.set_global("platform", Value::Int(0)),
-            "lang" => p.set_global("lang", Value::Int(0)),
+            "lang" => {
+                if p.get_global("lang").is_none() {
+                    p.set_global("lang", Value::Int(0));
+                }
+            }
             _ => return false,
         },
         "measurestring" => {
@@ -1747,6 +1751,8 @@ mod tests {
         code.extend([0x96, 5, 0, 7]);
         code.extend(i.to_le_bytes());
     }
+
+
 
     /// r = StringExtract(s, index, count) run by the interpreter
     fn extract(s: &str, index: i32, count: i32) -> String {

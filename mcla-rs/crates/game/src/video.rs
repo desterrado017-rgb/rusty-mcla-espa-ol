@@ -57,9 +57,8 @@ impl Video {
         self.frames as f32 / self.fps
     }
 
-    pub fn subtitle(&self) -> Option<&str> {
-        let t = self.time();
-        self.subs.iter().find(|s| t >= s.0 && t < s.1).map(|s| s.2.as_str())
+    pub fn subtitle(&self, enabled: bool) -> Option<&str> {
+        select_subtitle(&self.subs, self.time(), enabled)
     }
 
     /// Frame `i` decoded into the picture shown.
@@ -123,4 +122,12 @@ impl Video {
         ctx.request_repaint();
         true
     }
+}
+
+/// Keep the original track and its timings intact; the saved option only controls visibility.
+fn select_subtitle(subs: &[(f32, f32, String)], t: f32, enabled: bool) -> Option<&str> {
+    if !enabled {
+        return None;
+    }
+    subs.iter().find(|s| t >= s.0 && t < s.1).map(|s| s.2.as_str())
 }

@@ -4627,7 +4627,15 @@ impl Game {
 
     /// The page the pause menu shows for a controller page (see `CtrlPage`).
     pub fn mc4_ctrl_page(&self) -> CtrlPage {
+        self.mc4_ctrl_page_in(crate::hooks::language())
+    }
+
+    /// The same presentation with an explicit language for the port's added text.
+    /// Original text still comes only from the selected original string table.
+    fn mc4_ctrl_page_in(&self, language: mcla_config::Language) -> CtrlPage {
         use crate::flash_ui::{CHECK_OFF, CHECK_ON, ICON_A, ICON_B, ICON_X, ICON_Y};
+        use crate::port_text::{text, Text};
+        let port = |key| text(language, key);
         let st = |k: &str, fb: &str| self.ctrl_st(k, fb);
         let c = &self.opt_x.ctrl;
         let sel = self.menu_sel;
@@ -4683,13 +4691,12 @@ impl Game {
                 // The prompts name keys, not pad buttons - the pad's A B Y X do the same)
                 let k = &c.kbd;
                 let shown = if c.open { k.work } else { k.binds };
-                out.title = "KEYBOARD CONTROLS".to_string();
-                out.headers = vec![st("customcontrol_column_action", "ACTION"), "KEY".to_string()];
+                out.title = port(Text::KeyboardControls).to_string();
+                out.headers = vec![st("customcontrol_column_action", "ACTION"), port(Text::Key).to_string()];
                 for (i, (act, place)) in crate::keybinds::rows().into_iter().enumerate() {
-                    let def = &crate::keybinds::ACTS[act];
-                    let mut label = if def.shared { st(def.name, def.label) } else { def.label.to_string() };
+                    let mut label = self.keyboard_action_label(language, act);
                     if place == 1 {
-                        label.push_str(" (2ND KEY)");
+                        label.push_str(port(Text::SecondKey));
                     }
                     let must = place == 0 && shown.must(act);
                     let on = !k.polling || i == sel;
@@ -4698,20 +4705,20 @@ impl Game {
                     } else if must {
                         st("mapping_recommended", "MUST BE MAPPED")
                     } else {
-                        shown.keys[act][place].and_then(crate::keybinds::key_name).unwrap_or("").to_string()
+                        crate::port_text::key_label(language, shown.keys[act][place].and_then(crate::keybinds::key_name).unwrap_or("")).to_string()
                     };
                     out.rows.push((label, value, on));
                     out.props.push(if must && !(k.polling && i == sel) { 20 } else { on as i32 });
                 }
                 out.prompts = if k.polling {
-                    vec![("PRESS A KEY - ESC: CANCEL".to_string(), 0)]
+                    vec![(port(Text::PressKeyCancel).to_string(), 0)]
                 } else {
                     vec![(format!("ENTER: {}", st("controller_custom_prompt_change", "CHANGE")), 0), (format!("ESC: {}", st("prompt_back", "BACK")), 0), (format!("DEL: {}", st("controller_custom_prompt_delete", "CLEAR")), 0), (format!("F5: {}", st("prompt_defaults", "DEFAULTS")), 0)]
                 };
             }
             PAGE_WHEEL => {
                 // (the port's own page; the wheel is not driven yet - its three styles, greyed)
-                out.title = "RACING WHEEL".to_string();
+                out.title = port(Text::RacingWheel).to_string();
                 for (key, fb) in &STYLES[5..] {
                     out.rows.push((st(key, fb), String::new(), false));
                 }
@@ -4720,7 +4727,7 @@ impl Game {
             _ => {
                 // (the port's own page in front of the original's)
                 out.title = st("controller", "CONTROLLER");
-                for name in ["GAMEPAD", "KEYBOARD", "RACING WHEEL"] {
+                for name in [port(Text::Gamepad), port(Text::Keyboard), port(Text::RacingWheel)] {
                     out.rows.push((name.to_string(), String::new(), true));
                 }
                 out.prompts = vec![(st("prompt_accept", "ACCEPT"), ICON_A), back];
@@ -4730,6 +4737,41 @@ impl Game {
             out.props = out.rows.iter().map(|r| r.2 as i32).collect();
         }
         out
+    }
+
+    /// Added keyboard labels are presentation only: ACTS names, keycaps and saved bindings do not change.
+    fn keyboard_action_label(&self, language: mcla_config::Language, act: usize) -> String {
+        use crate::keybinds as kb;
+        use crate::port_text::{text, Text};
+        let def = &kb::ACTS[act];
+        if def.shared {
+            return self.ctrl_st(def.name, def.label);
+        }
+        // Preserve the port's existing English page exactly, including its custom labels.
+        if language == mcla_config::Language::English {
+            return def.label.to_string();
+        }
+        let added = match act {
+            kb::STEER_LEFT => Some(Text::KeyboardSteerLeft),
+            kb::STEER_RIGHT => Some(Text::KeyboardSteerRight),
+            kb::ABILITY_NEXT => Some(Text::KeyboardNextAbility),
+            kb::LEAN_BACK => Some(Text::KeyboardLeanBack),
+            kb::LEAN_FORWARD => Some(Text::KeyboardLeanForward),
+            kb::RESET_CAR => Some(Text::KeyboardResetVehicle),
+            _ => None,
+        };
+        if let Some(key) = added {
+            return text(language, key).to_string();
+        }
+        // shared=false describes the port's key-binding model, not the text's origin.
+        // CONTROL_ACTIONS contains the original hidden actions (CAM_DOWN, MUSIC_PAUSE,
+        // PAUSE and WHEEL_*). GPS and garage use original menu keys already used by game.rs.
+        let key = match act {
+            kb::GPS_MAP => "Navmap_GPSMap",
+            kb::GARAGE => "pause_go_to_garage",
+            _ => def.name,
+        };
+        self.ctrl_st(key, def.label)
     }
 
     /// A slot in the BUTTON column: a glyph (the movie's row kind 7), a text, or "MUST BE
@@ -14200,6 +14242,15 @@ mod tests {
         }
     }
 
+    /// Synthetic values prove resource selection; they are not purported Xbox translations.
+
+
+
+
+
+
+
+
     /// The disc's controller list and maps.
     #[test]
     fn controller_maps_of_the_disc() {
@@ -14641,7 +14692,7 @@ mod tests {
         g.menu_sel = 1;
         g.mc4_ctrl_input(a, false, false);
         assert_eq!((g.pause_page, g.menu_sel), (PAGE_KEYBOARD, 0));
-        let p = g.mc4_ctrl_page();
+        let p = g.mc4_ctrl_page_in(mcla_config::Language::English);
         assert_eq!((p.rows.len(), p.headers.len(), p.prompts.len()), (rows.len(), 2, 4));
         assert_eq!((p.rows[row(kb::GAS, 0)].1.as_str(), p.rows[row(kb::GAS, 1)].1.as_str(), p.rows[row(kb::NITRO, 0)].1.as_str(), p.rows[row(kb::SHIFT_UP, 0)].1.as_str()), ("W", "UP", "LEFT SHIFT", ""));
         assert!(p.rows[row(kb::GAS, 1)].0.ends_with("(2ND KEY)") && p.props.iter().all(|v| *v == 1));

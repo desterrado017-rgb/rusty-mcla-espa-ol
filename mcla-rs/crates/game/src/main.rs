@@ -24,6 +24,7 @@ mod camera;
 mod citymap;
 mod career;
 mod localization;
+mod port_text;
 mod catalog;
 mod modcars;
 mod modfs;
@@ -2033,9 +2034,9 @@ impl App {
                     let msg = if self.hyd_on {
                         let b = &self.game.opt_x.ctrl.kbd.binds;
                         let name = |a: usize| b.keys[a][0].and_then(kb::key_name).unwrap_or("-");
-                        format!("HYDRAULICS ON   {} {} {} {}", name(kb::WHEEL_FRONT_LEFT), name(kb::WHEEL_FRONT_RIGHT), name(kb::WHEEL_BACK_LEFT), name(kb::WHEEL_BACK_RIGHT))
+                        port_text::current(port_text::Text::HydraulicsKeyboardOn).replace("{keys}", &format!("{} {} {} {}", name(kb::WHEEL_FRONT_LEFT), name(kb::WHEEL_FRONT_RIGHT), name(kb::WHEEL_BACK_LEFT), name(kb::WHEEL_BACK_RIGHT)))
                     } else {
-                        "HYDRAULICS OFF".to_string()
+                        port_text::current(port_text::Text::HydraulicsKeyboardOff).to_string()
                     };
                     self.game.show_message(&msg);
                 }
@@ -2893,7 +2894,7 @@ impl App {
         }
         if std::mem::take(&mut self.cycle_ability) {
             self.ability.cycle();
-            self.game.show_message(&format!("ABILITY: {}", self.ability.kind.name()));
+            self.game.show_message(&port_text::current(port_text::Text::CycleAbility).replace("{ability}", self.ability.kind.name()));
         }
         if matches!(self.game.mode, Mode::FreeRoam | Mode::Race) && !self.vehicles.frozen {
             // the abilities grow with use (levels of the career's ability systems)
@@ -3530,7 +3531,7 @@ impl App {
             } else if self.photo_msg > 0.0 {
                 Some("PHOTO SAVED".to_string())
             } else {
-                Some("WASD  MOVE      Q / E  DOWN / UP      RIGHT MOUSE  LOOK      ENTER  TAKE PHOTO      ESC  BACK".to_string())
+                Some(port_text::current(port_text::Text::PhotoKeyboardHint).to_string())
             };
         }
         // ---- movies ----
@@ -5496,7 +5497,7 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                             if want {
                                 self.pending_action = MenuAction::OpenGarage;
                             } else if self.tick_no % 60 == 0 && self.news.is_empty() && self.game.flash_hud.is_none() {
-                                self.game.show_message("G  ENTER GARAGE");
+                                self.game.show_message(port_text::current(port_text::Text::GarageKeyboardHint));
                             }
                         }
                     }
@@ -12509,7 +12510,7 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                     self.chase.pos = self.vehicles.player().map(|c| c.state.pos - c.state.forward() * 7.0 + Vec3::Y * 2.5).unwrap_or(self.chase.pos);
                     self.game.show_message("");
                 } else {
-                    self.game.show_message("Could not build a race here, drive to a street first");
+                    self.game.show_message(port_text::current(port_text::Text::BuildStreetRaceFailed));
                     self.game.mode = Mode::FreeRoam;
                 }
                 self.game.menu_sel = 0;
@@ -12652,12 +12653,12 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                             p.set_perf(tuned);
                         }
                         let n = self.game.car_name(self.game.current_car);
-                        self.game.show_message(&format!("{} ready", n));
+                        self.game.show_message(&port_text::current(port_text::Text::VehicleReady).replace("{vehicle}", &n));
                         self.game.write_save(&self.opt.data_dir);
                     }
                     Err(e) => {
                         log::error!("garage: {:#}", e);
-                        self.game.show_message("Failed to load that car");
+                        self.game.show_message(port_text::current(port_text::Text::VehicleLoadFailed));
                     }
                 }
                 if !car_changed {

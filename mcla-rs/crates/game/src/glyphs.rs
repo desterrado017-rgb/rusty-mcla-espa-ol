@@ -120,7 +120,12 @@ pub fn with_key(key: &str, (text, icon): (String, i32)) -> (String, i32) {
 /// right stick, 19..22 the d-pad, 23 LT/RT, 24 LB/RB) on the current screen. None: no key
 /// (25 is the arrows drawn about the text, no button).
 pub fn key_name(icon: i32) -> Option<&'static str> {
-    let s = screen();
+    key_name_on(icon, screen())
+}
+
+// These are the port's existing key tokens. Keep language out of the lookup;
+// translate only the label passed to a movie or drawn on screen.
+fn key_name_on(icon: i32, s: Screen) -> Option<&'static str> {
     Some(match icon {
         1 => "ENTER",
         2 => "ESC",
@@ -155,15 +160,19 @@ pub fn key_name(icon: i32) -> Option<&'static str> {
 /// What the prompt bar shows for a prompt: the text and the icon frame the movie adds its
 /// `platform * 49` to; on the keyboard the text with the key's name and no icon.
 pub fn prompt(text: &str, icon: i32) -> (String, i32) {
+    prompt_for(crate::hooks::language(), device(), screen(), text, icon)
+}
+
+fn prompt_for(language: mcla_config::Language, device: Device, screen: Screen, text: &str, icon: i32) -> (String, i32) {
     let (key, text) = match text.strip_prefix(MARK).and_then(|t| t.split_once(MARK)) {
         Some((k, t)) => (Some(k), t),
         None => (None, text),
     };
-    if device() != Device::Keyboard {
+    if device != Device::Keyboard {
         return (text.to_string(), icon);
     }
-    match key.or_else(|| key_name(icon)) {
-        Some(k) => (format!("{text} [{k}]"), 0),
+    match key.or_else(|| key_name_on(icon, screen)) {
+        Some(k) => (format!("{text} [{}]", crate::port_text::key_label(language, k)), 0),
         None => (text.to_string(), icon),
     }
 }
@@ -171,17 +180,25 @@ pub fn prompt(text: &str, icon: i32) -> (String, i32) {
 /// `Player::key_caps` for a movie's button clips (instance name, the icon it shows): the
 /// keys' names on the keyboard, none (the clips' own pictures) with a pad.
 pub fn key_caps(clips: &[(&str, i32)]) -> Vec<(String, String, u32)> {
-    if device() != Device::Keyboard {
+    key_caps_for(crate::hooks::language(), device(), screen(), clips)
+}
+
+fn key_caps_for(language: mcla_config::Language, device: Device, screen: Screen, clips: &[(&str, i32)]) -> Vec<(String, String, u32)> {
+    if device != Device::Keyboard {
         return Vec::new();
     }
-    clips.iter().filter_map(|(name, icon)| key_name(*icon).map(|k| (name.to_string(), format!("[{k}]"), 0xffff_ffff))).collect()
+    clips.iter().filter_map(|(name, icon)| key_name_on(*icon, screen).map(|k| (name.to_string(), format!("[{}]", crate::port_text::key_label(language, k)), 0xffff_ffff))).collect()
 }
 
 /// A button's name for the port's own text (the start screen without its movie, the movie
 /// skip line): the key on the keyboard, else the pad's button.
 pub fn button_name(icon: i32) -> &'static str {
-    match device() {
-        Device::Keyboard => key_name(icon).unwrap_or(""),
+    button_name_for(crate::hooks::language(), device(), screen(), icon)
+}
+
+fn button_name_for(language: mcla_config::Language, device: Device, screen: Screen, icon: i32) -> &'static str {
+    match device {
+        Device::Keyboard => crate::port_text::key_label(language, key_name_on(icon, screen).unwrap_or("")),
         Device::Xbox => match icon {
             1 => "A",
             2 => "B",
@@ -206,6 +223,10 @@ pub fn button_name(icon: i32) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+
+
+
 
     #[test]
     fn prompts_follow_the_device() {

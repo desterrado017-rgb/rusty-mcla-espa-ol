@@ -3,6 +3,7 @@
 use crate::ai::AiDriver;
 use crate::physics::CarInput;
 use crate::mc4::{PAGE_DISPLAY, PAGE_PERFORMANCE};
+use crate::port_text::{current as port_text, Text as PortText};
 use crate::vehicle_model::{CarConfig, Slot, CUSTOM_SLOTS};
 use crate::vehicles::{Vehicles, PALETTE};
 use crate::world::World;
@@ -4744,7 +4745,7 @@ impl Game {
                 let screen = ctx.screen_rect();
                 let sc = (screen.height() / 900.0).clamp(0.5, 2.0);
                 let p = ctx.layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("movie subs")));
-                if let Some(sub) = m.subtitle() {
+                if let Some(sub) = m.subtitle(self.opts.subtitles) {
                     let lines = self.wrap(sub, 15.0 * sc, screen.width() * 0.8);
                     for (i, l) in lines.iter().enumerate() {
                         let pos = egui::pos2(screen.center().x, screen.bottom() - 70.0 * sc + (i as f32 - (lines.len() as f32 - 1.0) * 0.5) * 24.0 * sc);
@@ -4753,7 +4754,7 @@ impl Game {
                     }
                 }
                 if m.time() < 4.0 && m.any_key {
-                    self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + 30.0 * sc), egui::Align2::RIGHT_CENTER, "PRESS ANY KEY", 9.0 * sc, egui::Color32::from_gray(150));
+                    self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + 30.0 * sc), egui::Align2::RIGHT_CENTER, port_text(PortText::PressAnyKey), 9.0 * sc, egui::Color32::from_gray(150));
                 }
                 self.movie = Some(m);
             } else {
@@ -5579,7 +5580,7 @@ impl Game {
                                 items.push((s(key, fb), if self.flash_menu.is_some() { if self.cheats[i] { crate::flash_ui::CHECK_ON } else { crate::flash_ui::CHECK_OFF }.to_string() } else if self.cheats[i] { s("G_On", "ON") } else { s("G_Off", "OFF") }, Go::Page(10 + i as u8)));
                             } else {
                                 // (with the movie a locked cheat is a greyed, empty box; what it needs is the port's own text)
-                                items.push((s(key, fb), if self.flash_menu.is_some() { crate::flash_ui::CHECK_OFF.to_string() } else { s(&format!("{}_Locked", key), &format!("{} COLLECTABLES NEEDED", need)) }, Go::Off));
+                                items.push((s(key, fb), if self.flash_menu.is_some() { crate::flash_ui::CHECK_OFF.to_string() } else { s(&format!("{}_Locked", key), &port_text(PortText::CollectablesNeeded).replace("{count}", &need.to_string())) }, Go::Off));
                             }
                         }
                     }
@@ -5596,38 +5597,38 @@ impl Game {
                             items.push((s("camera", "CAMERA"), String::new(), Go::Page(8)));
                             // (the port's own pages, DECISIONS.md D19: DISPLAY a placeholder, PERFORMANCE
                             // the traffic's model detail)
-                            items.push(("DISPLAY".to_string(), String::new(), Go::Sub(PAGE_DISPLAY, 0, 0)));
-                            items.push(("PERFORMANCE".to_string(), String::new(), Go::Sub(PAGE_PERFORMANCE, 0, 0)));
+                            items.push((port_text(PortText::Display).to_string(), String::new(), Go::Sub(PAGE_DISPLAY, 0, 0)));
+                            items.push((port_text(PortText::Performance).to_string(), String::new(), Go::Sub(PAGE_PERFORMANCE, 0, 0)));
                         } else {
                             items.push((s("master volume", "MASTER VOLUME"), bar(self.opts.master), Go::Page(40)));
                             items.push((s("music volume", "MUSIC VOLUME"), bar(self.opts.music), Go::Page(41)));
                             items.push((s("option_subtitles", "SUBTITLES"), onoff(self.opts.subtitles), Go::Page(42)));
                             items.push((s("Camera Shake", "CAMERA SHAKE"), onoff(self.opts.shake), Go::Page(43)));
                             items.push((s("option_sensitivity", "STEERING SENS."), bar(self.opts.sens), Go::Page(44)));
-                            items.push(("DETAIL LEVEL".to_string(), crate::hooks::display_value(crate::hooks::ROW_DETAIL_LEVEL), Go::Page(crate::hooks::ROW_DETAIL_LEVEL)));
-                            items.push(("REAR-VIEW MIRROR".to_string(), onoff(self.opts.rear_view), Go::Page(53)));
+                            items.push((port_text(PortText::DetailLevel).to_string(), crate::hooks::display_value(crate::hooks::ROW_DETAIL_LEVEL), Go::Page(crate::hooks::ROW_DETAIL_LEVEL)));
+                            items.push((port_text(PortText::RearViewMirror).to_string(), onoff(self.opts.rear_view), Go::Page(53)));
                         }
                     }
                     PAGE_DISPLAY => {
                         // (the port's own page, D19; its first row the original's hidden rear-view mirror, D20)
-                        title = "DISPLAY".to_string();
+                        title = port_text(PortText::Display).to_string();
                         let on = |b: bool| format!("{}{}", crate::flash_ui::CHOICE, if b { s("G_On", "ON") } else { s("G_Off", "OFF") });
-                        items.push(("REAR-VIEW MIRROR".to_string(), on(self.opts.rear_view), Go::Page(53)));
+                        items.push((port_text(PortText::RearViewMirror).to_string(), on(self.opts.rear_view), Go::Page(53)));
                         // (settings.toml's display keys, applied at once and written back - `hooks::display_step`)
-                        for (label, row) in [("WINDOW MODE", crate::hooks::ROW_WINDOW_MODE), ("RESOLUTION", crate::hooks::ROW_RESOLUTION), ("MONITOR", crate::hooks::ROW_MONITOR), ("VSYNC", crate::hooks::ROW_VSYNC), ("FPS CAP", crate::hooks::ROW_FPS_CAP), ("FPS COUNTER", crate::hooks::ROW_FPS_MONITOR), ("RENDER SCALE", crate::hooks::ROW_RENDER_SCALE), ("TEXTURE FILTERING", crate::hooks::ROW_TEX_FILTER), ("ANTI-ALIASING", crate::hooks::ROW_AA), ("BLOOM", crate::hooks::ROW_BLOOM), ("DEPTH OF FIELD", crate::hooks::ROW_DOF), ("MOTION BLUR", crate::hooks::ROW_MOTION_BLUR)] {
+                        for (label, row) in [(port_text(PortText::WindowMode), crate::hooks::ROW_WINDOW_MODE), (port_text(PortText::Resolution), crate::hooks::ROW_RESOLUTION), (port_text(PortText::Monitor), crate::hooks::ROW_MONITOR), (port_text(PortText::Vsync), crate::hooks::ROW_VSYNC), (port_text(PortText::FpsCap), crate::hooks::ROW_FPS_CAP), (port_text(PortText::FpsCounter), crate::hooks::ROW_FPS_MONITOR), (port_text(PortText::RenderScale), crate::hooks::ROW_RENDER_SCALE), (port_text(PortText::TextureFiltering), crate::hooks::ROW_TEX_FILTER), (port_text(PortText::AntiAliasing), crate::hooks::ROW_AA), (port_text(PortText::Bloom), crate::hooks::ROW_BLOOM), (port_text(PortText::DepthOfField), crate::hooks::ROW_DOF), (port_text(PortText::MotionBlur), crate::hooks::ROW_MOTION_BLUR)] {
                             items.push((label.to_string(), format!("{}{}", crate::flash_ui::CHOICE, crate::hooks::display_value(row)), Go::Page(row)));
                         }
                     }
                     PAGE_PERFORMANCE => {
                         // (the port's own page, D19)
-                        title = "PERFORMANCE".to_string();
+                        title = port_text(PortText::Performance).to_string();
                         let on = |b: bool| format!("{}{}", crate::flash_ui::CHOICE, if b { s("G_On", "ON") } else { s("G_Off", "OFF") });
                         // (settings.toml game.*, applied at once and written back - `hooks::display_step`; DETAIL LEVEL 3X folds in the old HIGH-DETAIL TRAFFIC)
-                        for (label, row) in [("SHADOW RESOLUTION", crate::hooks::ROW_SHADOW_RES), ("DRAW DISTANCE", crate::hooks::ROW_DRAW_DISTANCE), ("DETAIL LEVEL", crate::hooks::ROW_DETAIL_LEVEL)] {
+                        for (label, row) in [(port_text(PortText::ShadowResolution), crate::hooks::ROW_SHADOW_RES), (port_text(PortText::DrawDistance), crate::hooks::ROW_DRAW_DISTANCE), (port_text(PortText::DetailLevel), crate::hooks::ROW_DETAIL_LEVEL)] {
                             items.push((label.to_string(), format!("{}{}", crate::flash_ui::CHOICE, crate::hooks::display_value(row)), Go::Page(row)));
                         }
                         // (settings.toml game.intro: the start-up sequence (boot.rs, next start) and the career's opening)
-                        items.push(("INTRO".to_string(), format!("{}{}", crate::flash_ui::CHOICE, crate::hooks::intro_value()), Go::Page(54)));
+                        items.push((port_text(PortText::Intro).to_string(), format!("{}{}", crate::flash_ui::CHOICE, crate::hooks::intro_value()), Go::Page(54)));
                     }
                     5 | 70..=73 => {
                         // (the controller pages, `mc4` step 13b: 5 the port's own GAMEPAD / KEYBOARD /
@@ -5677,7 +5678,7 @@ impl Game {
                                 // (the slider's place, -10 .. 10: reference `q20_game` shows 0 for the save's 0.0)
                                 items.push((s("option_sensitivity", "STEERING SENS."), format!("{}{}", CHOICE, self.mc4_sens_step()), Go::Page(44)));
                                 // (the port's own, D39: settings.toml game.stick_dead_zone)
-                                items.push(("STICK DEAD ZONE".to_string(), format!("{}{}", CHOICE, crate::hooks::stick_dead_value()), Go::Page(crate::hooks::ROW_STICK_DEAD)));
+                                items.push((port_text(PortText::StickDeadZone).to_string(), format!("{}{}", CHOICE, crate::hooks::stick_dead_value()), Go::Page(crate::hooks::ROW_STICK_DEAD)));
                                 // (option_up / option_down: the roof of the convertibles - `mc4`, options.
                                 // Greyed, without a value, while the vehicle is no convertible: `q20_game`, the R8)
                                 let down = self.mc4.as_ref().map_or(false, |m| m.options.convertible_top_down);
@@ -5837,7 +5838,7 @@ impl Game {
                             items.push((s("pause_statistics", "STATISTICS"), String::new(), Go::Page(1)));
                             items.push((s("pause_cheat_codes", "CHEAT CODES"), String::new(), Go::Page(2)));
                             items.push((s("pause_playlists", "MUSIC PLAYLISTS"), String::new(), Go::Page(3)));
-                            items.push(("QUIT GAME".to_string(), String::new(), Go::Act(MenuAction::Quit)));
+                            items.push((port_text(PortText::QuitGame).to_string(), String::new(), Go::Act(MenuAction::Quit)));
                         }
                     },
                 }
@@ -6267,7 +6268,7 @@ impl Game {
                     }
                 }
                 let fy = panel.bottom() - 46.0 * sc;
-                let hint = if on_tabs { format!("LEFT / RIGHT  {}", s("prompt_changeTabs", "CHANGE TABS")) } else { "ESC  BACK".to_string() };
+                let hint = if on_tabs { port_text(PortText::LeftRightHint).replace("{action}", &s("prompt_changeTabs", "CHANGE TABS")) } else { port_text(PortText::EscapeBackHint).to_string() };
                 self.text(&painter, egui::pos2(tx, fy), egui::Align2::LEFT_TOP, &hint, 11.0 * sc, egui::Color32::from_gray(150));
                 if on_tabs && self.pause_tab == 0 {
                     self.mission_log(&painter, screen, sc, accent);
@@ -6724,7 +6725,7 @@ impl Game {
                         painter.rect_stroke(sw, 2.0, egui::Stroke::new(1.0, egui::Color32::BLACK), egui::StrokeKind::Inside);
                     }
                 }
-                self.text(&painter, egui::pos2(tx, panel.bottom() - 40.0 * sc), egui::Align2::LEFT_TOP, "LEFT / RIGHT  CHANGE    SHIFT  FINE    ESC  DONE", 11.0 * sc, egui::Color32::from_gray(150));
+                self.text(&painter, egui::pos2(tx, panel.bottom() - 40.0 * sc), egui::Align2::LEFT_TOP, port_text(PortText::VinylKeyboardHint), 11.0 * sc, egui::Color32::from_gray(150));
                 self.vinyl_edit = Some(ed);
                 if back {
                     self.vinyl_edit = None;
@@ -6843,7 +6844,7 @@ impl Game {
                     };
                     self.text(&painter, egui::pos2(r.right() - 28.0 * sc, r.center().y), egui::Align2::RIGHT_CENTER, &next, 14.0 * sc, vcol);
                 }
-                self.text(&painter, egui::pos2(tx, panel.bottom() - 46.0 * sc), egui::Align2::LEFT_TOP, "ENTER  BUY THE NEXT STAGE      ESC  BACK", 11.0 * sc, egui::Color32::from_gray(150));
+                self.text(&painter, egui::pos2(tx, panel.bottom() - 46.0 * sc), egui::Align2::LEFT_TOP, port_text(PortText::PerformanceKeyboardHint), 11.0 * sc, egui::Color32::from_gray(150));
                 }
                 if enter || buy {
                     self.buy_perf_part(sel);
@@ -8144,7 +8145,7 @@ impl Game {
                                 .map(|&i| {
                                     // (a placeholder of a mod that is not installed: the note, no figures - MODS.md S3)
                                     if crate::modgarage::placeholder(i).is_some() {
-                                        return ("VEHICLE: -".to_string(), crate::modgarage::MOD_MISSING.to_string(), 0);
+                                        return ("VEHICLE: -".to_string(), port_text(PortText::ModMissing).to_string(), 0);
                                     }
                                     let c = info(i);
                                     // the class the car races in now, and the group that unlocks it (D..A = 1..4)
@@ -9681,7 +9682,7 @@ impl Game {
                         self.text(&p, pos, egui::Align2::CENTER_CENTER, l, 15.0 * sc, egui::Color32::WHITE);
                     }
                     if !plain {
-                        self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + bar * 0.5), egui::Align2::RIGHT_CENTER, &format!("{}  SKIP", crate::glyphs::button_name(crate::flash_ui::ICON_A)), 9.0 * sc, egui::Color32::from_gray(120));
+                        self.text(&p, egui::pos2(screen.right() - 30.0 * sc, screen.top() + bar * 0.5), egui::Align2::RIGHT_CENTER, &format!("{}  {}", crate::glyphs::button_name(crate::flash_ui::ICON_A), port_text(PortText::Skip)), 9.0 * sc, egui::Color32::from_gray(120));
                     }
                 } else if self.fresh_game && self.mode == Mode::FreeRoam && self.flash_prompt.is_some() && (self.message_box.is_some() || (self.save_box != 2 && self.flash_popup.is_some() && std::env::var("MCLA_NO_SAVE_BOX").is_err())) {
                     // (the save boxes stand over a dark screen before VEHICLE SELECT)
@@ -11390,7 +11391,7 @@ impl Game {
             painter.line_segment([c - egui::vec2(0.0, 16.0) * sc, c + egui::vec2(0.0, 16.0) * sc], egui::Stroke::new(1.5 * sc, egui::Color32::WHITE));
             let len: f32 = pts.windows(2).map(|w| w[0].distance(w[1])).sum();
             self.text(&painter, egui::pos2(screen.center().x, screen.top() + 40.0 * sc), egui::Align2::CENTER_TOP, &format!("RACE EDITOR    {} POINTS    {:.1} KM", pts.len(), len / 1000.0), 16.0 * sc, egui::Color32::from_rgb(255, 230, 60));
-            self.text(&painter, egui::pos2(screen.center().x, screen.top() + 66.0 * sc), egui::Align2::CENTER_TOP, "ARROWS  MOVE      ENTER  PLACE (START FIRST)      BACKSPACE  UNDO      R  RACE IT      E  LEAVE", 10.0 * sc, egui::Color32::from_gray(200));
+            self.text(&painter, egui::pos2(screen.center().x, screen.top() + 66.0 * sc), egui::Align2::CENTER_TOP, port_text(PortText::RaceEditorKeyboardHint), 10.0 * sc, egui::Color32::from_gray(200));
         }
         // player arrow
         if !own {
@@ -11416,7 +11417,7 @@ impl Game {
         let painter = if self.flash_navsys.is_some() && self.editor.is_none() { painter.with_clip_rect(egui::Rect::NOTHING) } else { painter };
         self.text(&painter, egui::pos2(screen.left() + 50.0 * sc_ui, screen.top() + 34.0 * sc_ui), egui::Align2::LEFT_TOP, "LOS ANGELES", 26.0 * sc_ui, egui::Color32::WHITE);
         self.text(&painter, egui::pos2(screen.right() - 50.0 * sc_ui, screen.top() + 38.0 * sc_ui), egui::Align2::RIGHT_TOP, &format!("CASH ${}    REP {}", self.money, self.rep), 13.0 * sc_ui, egui::Color32::from_rgb(120, 230, 120));
-        self.text(&painter, egui::pos2(screen.left() + 50.0 * sc_ui, screen.bottom() - 46.0 * sc_ui), egui::Align2::LEFT_TOP, "ARROWS  MOVE      Z / X  ZOOM      ORANGE  RACE EVENTS      BLUE  CAREER EVENTS      E  RACE EDITOR      M / ESC  CLOSE", 10.0 * sc_ui, egui::Color32::from_gray(150));
+        self.text(&painter, egui::pos2(screen.left() + 50.0 * sc_ui, screen.bottom() - 46.0 * sc_ui), egui::Align2::LEFT_TOP, port_text(PortText::MapKeyboardHint), 10.0 * sc_ui, egui::Color32::from_gray(150));
     }
 }
 

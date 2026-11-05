@@ -13,6 +13,7 @@
 //! - F12: `App::screenshot_key` saves the next frame as a PNG in the screenshots folder.
 
 use crate::App;
+use crate::port_text::{self, Text};
 use mcla_config::paths::{self, DataDir, DataInputs, DataSource};
 use mcla_config::{FpsMonitor, Intro, Settings, Status, WindowMode};
 use std::collections::VecDeque;
@@ -104,9 +105,17 @@ static INTRO_LIVE: Mutex<Option<Intro>> = Mutex::new(None);
 /// The INTRO row's value: NORMAL / FAST / OFF (= `skip`), with "(NEXT START)" while it differs from the one this run
 /// started with (the start-up sequence takes it at the next start; the career's opening at once).
 pub fn intro_value() -> String {
-    let m = intro_mode();
-    let w = if m == Intro::Skip { "OFF".to_string() } else { m.word().to_uppercase() };
-    if m != intro_at_start() { format!("{w} (NEXT START)") } else { w }
+    intro_value_for(language(), intro_mode(), intro_at_start())
+}
+
+fn intro_value_for(language: mcla_config::Language, mode: Intro, at_start: Intro) -> String {
+    let key = match mode {
+        Intro::Normal => Text::IntroNormal,
+        Intro::Fast => Text::IntroFast,
+        Intro::Skip => Text::PortOff,
+    };
+    let value = port_text::text(language, key);
+    if mode != at_start { format!("{value} {}", port_text::text(language, Text::IntroNextStart)) } else { value.to_string() }
 }
 
 /// LEFT / RIGHT on the INTRO row: NORMAL -> FAST -> OFF round, written to `settings.toml` `game.intro` at once
@@ -385,7 +394,7 @@ pub fn set_adapter(info: &wgpu::AdapterInfo) {
 /// driver has neither Vulkan nor DX12, where wgpu falls back to OpenGL and the device cannot be made).
 pub fn gpu_init_failed(e: &anyhow::Error) -> ! {
     let gpu = ADAPTER_GPU.lock().ok().and_then(|a| a.clone());
-    let (title, text) = gpu_failure_text(gpu.as_ref().map(|(n, b)| (n.as_str(), *b)), &format!("{e:#}"), &paths::logs_dir());
+    let (title, text) = gpu_failure_text(language(), gpu.as_ref().map(|(n, b)| (n.as_str(), *b)), &format!("{e:#}"), &paths::logs_dir());
     log::error!("gpu init failed: {e:#}");
     flush_log();
     eprintln!("{title}
@@ -397,37 +406,24 @@ pub fn gpu_init_failed(e: &anyhow::Error) -> ! {
     std::process::exit(1)
 }
 
-fn gpu_failure_text(gpu: Option<(&str, wgpu::Backend)>, err: &str, logs: &Path) -> (String, String) {
-    let tail = format!("Details: {err}
-
-The game's log is in {}. The launcher's Export Logs collects it.", logs.display());
+fn gpu_failure_text(language: mcla_config::Language, gpu: Option<(&str, wgpu::Backend)>, err: &str, logs: &Path) -> (String, String) {
+    let t = |key| port_text::text(language, key);
+    let tail = format!("{}: {err}\n\n{}", t(Text::GpuDetailsLabel), t(Text::GpuLogLocation).replace("{path}", &logs.display().to_string()));
     match gpu {
         Some((name, backend)) if backend != wgpu::Backend::Gl => (
-            "Rusty MCLA - the graphics driver could not start the game".into(),
+            t(Text::GpuDriverTitle).into(),
             format!(
-                "The graphics driver could not start the game.
-
-Graphics: {name} ({})
-
-Updating the graphics driver may help. If it keeps happening, please report it on GitHub with the logs.
-
-{tail}",
-                backend.to_str()
+                "{}\n\n{}: {name} ({})\n\n{}\n\n{tail}",
+                t(Text::GpuDriverMessage), t(Text::GpuGraphicsLabel), backend.to_str(), t(Text::GpuDriverHelp)
             ),
         ),
         _ => (
-            "Rusty MCLA - graphics card not supported".into(),
+            t(Text::GpuUnsupportedTitle).into(),
             format!(
-                "Rusty MCLA cannot start on this graphics card.
-
-Graphics: {}
-
-The game needs a graphics card whose driver supports Vulkan or DirectX 12. This one has neither, so the game cannot create its graphics device on it.
-
-If the PC has another graphics card, make sure the game runs on that one and its driver is up to date.
-
-{tail}",
-                gpu.map_or_else(|| "none found that can draw to the window".to_string(), |(n, _)| format!("{n} (OpenGL only)"))
+                "{}\n\n{}: {}\n\n{}\n\n{}\n\n{tail}",
+                t(Text::GpuUnsupportedMessage), t(Text::GpuGraphicsLabel),
+                gpu.map_or_else(|| t(Text::GpuNone).to_string(), |(n, _)| format!("{n} ({})", t(Text::GpuOpenGlOnly))),
+                t(Text::GpuRequirements), t(Text::GpuAlternative)
             ),
         ),
     }
@@ -865,36 +861,49 @@ fn fps_caps(d: &mcla_config::Display) -> Vec<u32> {
 /// The value a DISPLAY row shows.
 pub fn display_value(row: u8) -> String {
     let d = display();
+    let g = game_live();
+    let monitor_list = if row == ROW_MONITOR { monitors() } else { Vec::new() };
+    display_value_for(language(), row, &d, &g, &monitor_list)
+}
+
+/// Formats only the visible value: config enum words, numeric selectors and settings stay unchanged.
+fn display_value_for(language: mcla_config::Language, row: u8, d: &mcla_config::Display, g: &mcla_config::GameSettings, monitors: &[(String, (u32, u32), Vec<(u32, u32)>)]) -> String {
+    let t = |key| port_text::text(language, key);
+    let onoff = |on| t(if on { Text::PortOn } else { Text::PortOff }).to_string();
     match row {
-        ROW_WINDOW_MODE => d.window_mode.word().to_uppercase(),
+        ROW_WINDOW_MODE => t(match d.window_mode {
+            WindowMode::Windowed => Text::Windowed,
+            WindowMode::Borderless => Text::Borderless,
+            WindowMode::Fullscreen => Text::Fullscreen,
+        }).to_string(),
         ROW_RESOLUTION => format!("{} X {}", d.resolution.w, d.resolution.h),
-        ROW_MONITOR => match monitors().get(d.monitor as usize) {
+        ROW_MONITOR => match monitors.get(d.monitor as usize) {
             Some((name, (w, h), _)) => format!("{}  {} ({} X {})", d.monitor + 1, name.trim_start_matches(r"\\.\").to_uppercase(), w, h),
             None => format!("{}", d.monitor + 1),
         },
-        ROW_VSYNC => if d.vsync { "ON" } else { "OFF" }.to_string(),
-        ROW_FPS_CAP => if d.fps_cap == 0 { "OFF".to_string() } else { d.fps_cap.to_string() },
+        ROW_VSYNC => onoff(d.vsync),
+        ROW_FPS_CAP => if d.fps_cap == 0 { t(Text::PortOff).to_string() } else { d.fps_cap.to_string() },
         ROW_FPS_MONITOR => match d.fps_monitor {
-            FpsMonitor::Off => "OFF",
+            FpsMonitor::Off => t(Text::PortOff),
             FpsMonitor::Fps => "FPS",
-            FpsMonitor::FrameTime => "FPS + FRAME TIME",
+            FpsMonitor::FrameTime => t(Text::FpsFrameTime),
         }
         .to_string(),
-        ROW_TEX_FILTER => d.texture_filtering.word().to_uppercase(),
+        ROW_TEX_FILTER => if d.texture_filtering == mcla_config::TexFilter::Original { t(Text::Original).to_string() } else { d.texture_filtering.word().to_uppercase() },
         ROW_RENDER_SCALE => format!("{}%", (d.render_scale * 100.0).round() as i32),
-        ROW_SHADOW_RES => game_live().shadow_resolution.word().to_uppercase(),
-        ROW_DRAW_DISTANCE => game_live().draw_distance.word().to_uppercase(),
-        ROW_DETAIL_LEVEL => game_live().detail_level.word().to_uppercase(),
+        ROW_SHADOW_RES => if g.shadow_resolution == mcla_config::ShadowRes::Original { t(Text::Original).to_string() } else { g.shadow_resolution.word().to_uppercase() },
+        ROW_DRAW_DISTANCE => if g.draw_distance == mcla_config::Scale::Original { t(Text::Original).to_string() } else { g.draw_distance.word().to_uppercase() },
+        ROW_DETAIL_LEVEL => if g.detail_level == mcla_config::Scale::Original { t(Text::Original).to_string() } else { g.detail_level.word().to_uppercase() },
         ROW_AA => match d.aa {
-            mcla_config::Aa::Original => "ORIGINAL",
-            mcla_config::Aa::Off => "OFF",
+            mcla_config::Aa::Original => t(Text::Original),
+            mcla_config::Aa::Off => t(Text::PortOff),
             mcla_config::Aa::X2 => "2X",
             mcla_config::Aa::X4 => "4X",
         }
         .to_string(),
-        ROW_BLOOM => if d.bloom { "ON" } else { "OFF" }.to_string(),
-        ROW_DOF => if d.dof { "ON" } else { "OFF" }.to_string(),
-        ROW_MOTION_BLUR => if d.motion_blur { "ON" } else { "OFF" }.to_string(),
+        ROW_BLOOM => onoff(d.bloom),
+        ROW_DOF => onoff(d.dof),
+        ROW_MOTION_BLUR => onoff(d.motion_blur),
         _ => String::new(),
     }
 }
@@ -957,8 +966,12 @@ pub fn detail_level_scale() -> f32 {
 
 /// The STICK DEAD ZONE row's text.
 pub fn stick_dead_value() -> String {
-    match game_live().stick_dead_zone {
-        0 => "OFF".to_string(),
+    stick_dead_value_for(language(), game_live().stick_dead_zone)
+}
+
+fn stick_dead_value_for(language: mcla_config::Language, percent: u32) -> String {
+    match percent {
+        0 => port_text::text(language, Text::PortOff).to_string(),
         n => format!("{n}%"),
     }
 }
@@ -1337,7 +1350,7 @@ impl App {
         let dir = get().map_or_else(|| PathBuf::from("screenshots"), |r| r.screenshots.clone());
         if let Err(e) = std::fs::create_dir_all(&dir) {
             log::warn!("screenshot: cannot create {}: {e}", dir.display());
-            self.game.show_message("SCREENSHOT FAILED");
+            self.game.show_message(port_text::current(Text::ScreenshotFailed));
             return;
         }
         let path = screenshot_name(&dir, &timestamp());
@@ -1369,7 +1382,7 @@ impl App {
                 let (w, h) = std::fs::File::open(&path).ok().and_then(|f| png::Decoder::new(std::io::BufReader::new(f)).read_info().ok()).map_or((0, 0), |r| (r.info().width, r.info().height));
                 log::info!("screenshot key: saved {} ({}x{})", path.display(), w, h);
                 if self.photo.is_none() {
-                    self.game.show_message("SCREENSHOT SAVED");
+                    self.game.show_message(port_text::current(Text::ScreenshotSaved));
                 }
             } else {
                 log::warn!("screenshot key: {} was not written", path.display());
@@ -1427,15 +1440,22 @@ mod tests {
 
     #[test]
     fn gpu_failure_says_why() {
+        let language = mcla_config::Language::English;
         let logs = Path::new("C:/logs");
-        let (title, text) = gpu_failure_text(Some(("Intel(R) HD Graphics 4000", wgpu::Backend::Gl)), "request device", logs);
+        let (title, text) = gpu_failure_text(language, Some(("Intel(R) HD Graphics 4000", wgpu::Backend::Gl)), "request device", logs);
         assert!(title.contains("not supported") && text.contains("HD Graphics 4000 (OpenGL only)") && text.contains("Vulkan or DirectX 12"));
         assert!(text.contains("Details: request device") && text.contains("C:/logs"));
-        let (title, _) = gpu_failure_text(None, "no suitable GPU adapter", logs);
+        let (title, _) = gpu_failure_text(language, None, "no suitable GPU adapter", logs);
         assert!(title.contains("not supported"));
-        let (title, text) = gpu_failure_text(Some(("RTX", wgpu::Backend::Vulkan)), "x", logs);
+        let (title, text) = gpu_failure_text(language, Some(("RTX", wgpu::Backend::Vulkan)), "x", logs);
         assert!(title.contains("driver") && text.contains("RTX (vulkan)"));
     }
+
+
+
+
+
+
 
     fn tmp(name: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!("mcla-hooks-test-{}-{name}", std::process::id()));

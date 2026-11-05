@@ -575,6 +575,12 @@ fn clip_poly(poly: &mut Vec<WarpVert>, r: [f32; 4]) {
 /// FSCommands the movies send (`F-30276` handles getvar/setvar; the
 /// measuring commands write their result back into `_global`).
 fn fscommand(p: &mut Player, cmd: &str, arg: &str, strings: &StringTable, logic: &crate::menu3d::UiLogic) {
+    // Getvar asks the host for its selected language; a movie's current global
+    // must not replace the selection made when the original tables were loaded.
+    if cmd.eq_ignore_ascii_case("getvar") && arg == "lang" {
+        p.set_global("lang", Value::Int(strings.lang as i32));
+        return;
+    }
     if mcla_flash::player::common_fscommand(p, cmd, arg) {
         return;
     }
@@ -879,6 +885,12 @@ pub struct FlashMenu {
     shown: Option<MenuPage>,
     /// the glyphs the page was shown with (`glyphs`: the device, the movie's `platform`)
     glyphs: (crate::glyphs::Device, i32),
+}
+
+fn hangout_bank_label<'a>(strings: &'a StringTable, override_text: Option<&'a str>) -> &'a str {
+    // The same original key used by the garage and GPS money line. The exact
+    // old English fallback is only for a missing entry, after the debug override.
+    override_text.or_else(|| strings.get("G_Money")).unwrap_or("MONEY  ")
 }
 
 pub const PAUSE_MOVIE: &str = "resources/ui/pause/0xaed9b6c9.r27";
@@ -1429,7 +1441,7 @@ impl FlashMenu {
                 // the word before it)
                 p.set_global("bank", Value::Int((*m).clamp(0, i32::MAX as i64) as i32));
                 p.set_global("t_bank", Value::Int((*m).clamp(0, i32::MAX as i64) as i32));
-                p.set_global("t_banktxt", Value::str(std::env::var("MCLA_BANKTXT").as_deref().unwrap_or("MONEY  ")));
+                p.set_global("t_banktxt", Value::str(hangout_bank_label(&self.movie.strings, std::env::var("MCLA_BANKTXT").as_deref().ok())));
             }
         }
         if !page.headers.is_empty() {
@@ -1601,7 +1613,7 @@ impl FlashPhone {
         }
         // (dark on the screen's light strip, as the button's own picture; no brackets - the
         // strip has room for the clip's width)
-        p.key_caps = if glyphs.0 == crate::glyphs::Device::Keyboard { vec![("btn_back".into(), crate::glyphs::gps_key().to_string(), 0xff30_3030)] } else { Vec::new() };
+        p.key_caps = if glyphs.0 == crate::glyphs::Device::Keyboard { vec![("btn_back".into(), crate::port_text::key_label(crate::hooks::language(), crate::glyphs::gps_key()).to_string(), 0xff30_3030)] } else { Vec::new() };
         match message {
             Some((title, text, icon)) => {
                 let state = (title.to_string(), text.to_string(), icon, prompt.to_string());
@@ -1795,6 +1807,10 @@ pub fn race_time(ms: i32) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+
+
+
 
     /// The splash rings (F-71442, F-92234, F-60177): five per slot with the one on show, a sixth dropped,
     /// the first posted when queued, the next when the movie clears `SplashVisibles`.
