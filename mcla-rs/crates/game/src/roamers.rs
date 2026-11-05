@@ -537,6 +537,10 @@ impl Roamers {
     /// garage script's ClearAllDistricts / EvaluateAllDistricts - taken here as "the player
     /// has another vehicle"), and the list of cruising men is made from it.
     pub fn sync(&mut self, game: &mut Game, player_car: &str) {
+        let diag = crate::rival_diag::enabled();
+        if diag {
+            crate::rival_diag::transition("roamer-slot-system", format!("{}", self.sys.slots.is_empty()), format_args!("districts={} slots={} first_mission_present={} first_mission_in_log={}", self.sys.slots.len(), self.sys.slots.iter().map(Vec::len).sum::<usize>(), game.career.mission_no("RACE_GH_06").is_some(), game.career.mission_in_log("RACE_GH_06")));
+        }
         if self.sys.slots.is_empty() {
             return;
         }
@@ -562,6 +566,9 @@ impl Roamers {
             let active = game.career.mission_in_log(row.0);
             let d = row.1;
             let held = self.sys.slots.get(d).map_or(false, |l| l.iter().any(|s| s.hookman.as_ref().map_or(false, |h| h.mission == row.0 && (row.2.is_empty() || h.name == row.2))));
+            if diag && row.0 == "RACE_GH_06" {
+                crate::rival_diag::transition("roamer-mission-slot", format!("{active}:{held}"), format_args!("mission={} active_in_log={} held={} district={} slots={:?}", row.0, active, held, d, self.sys.slots.get(d)));
+            }
             if active && !held {
                 let mut h = game.mc4_mission_hookman(row);
                 if row.2.is_empty() {
@@ -573,6 +580,9 @@ impl Roamers {
                     (h.name, h.car, h.config, h.mod_value) = (name, car, config, m);
                 }
                 if self.sys.request(h, PRIO_MISSION) {
+                    if diag && row.0 == "RACE_GH_06" {
+                        crate::rival_diag::record("roamer-slot-request", format_args!("mission={} accepted=true slots={:?}", row.0, self.sys.slots.get(d)));
+                    }
                     log::info!("slots: {} gets a slot of {} for {}", row.2, DISTRICTS[d], row.0);
                     // (his core, once CruisingHookmanCore runs, the Cruising_Offline state listens
                     // and no movie transition is on: mcUINavMap_SetTargetByUID(him), once -
@@ -582,9 +592,14 @@ impl Roamers {
                         game.set_gps_target(None, Some(row.0.to_string()));
                         log::info!("slots: the man of {} is made the GPS target", row.0);
                     }
+                } else if diag && row.0 == "RACE_GH_06" {
+                    crate::rival_diag::transition("roamer-slot-request-rejected", "rejected".into(), format_args!("mission={} accepted=false priority={} district={} slots={:?}", row.0, PRIO_MISSION, d, self.sys.slots.get(d)));
                 }
             } else if !active && held {
                 while let Some(d) = self.sys.remove_mission(row.0) {
+                    if diag && row.0 == "RACE_GH_06" {
+                        crate::rival_diag::record("roamer-slot-removed", format_args!("mission={} district={} active_in_log=false", row.0, d));
+                    }
                     log::info!("slots: the man of {} leaves {}", row.0, DISTRICTS[d]);
                     eval.push(d);
                 }
@@ -611,7 +626,12 @@ impl Roamers {
             for (i, s) in self.sys.slots[d].iter().enumerate() {
                 let Some(h) = s.hookman.as_ref() else { continue };
                 let stem = s.script.rsplit('/').next().unwrap_or("").to_ascii_lowercase();
-                let Some(pts) = self.loops.get(&stem) else { continue };
+                let Some(pts) = self.loops.get(&stem) else {
+                    if diag && h.mission == "RACE_GH_06" {
+                        crate::rival_diag::transition("roamer-loop", "missing".into(), format_args!("mission={} script={} stem={} known_loops={}", h.mission, s.script, stem, self.loops.len()));
+                    }
+                    continue;
+                };
                 // (the slot's script hands the hookman's core its loop: F-94535 starts the
                 // slot's script as the slot is given, and the script starts the core with its
                 // static block - `hw_slot1` 0x1d0..0x1df. A story core may write its own loop over
@@ -622,6 +642,9 @@ impl Roamers {
                     Some((p, hd, st)) if !h.mission.is_empty() => (p.clone(), *hd, *st),
                     _ => (pts.clone(), self.heads.get(&stem).copied(), None),
                 };
+                if diag && h.mission == "RACE_GH_06" {
+                    crate::rival_diag::transition("roamer-loop", format!("{}:{}", pts.is_empty(), self.cores.contains_key(&h.mission)), format_args!("mission={} script={} points={} core_override={} start={:?} heading={:?} car={} config={}", h.mission, s.script, pts.len(), self.cores.contains_key(&h.mission), start, heading, h.car, h.config));
+                }
                 men.push(Man { key: format!("slot:{d}:{i}"), kind: ManKind::Slot, district: d, name: h.name.clone(), car: h.car.clone(), config: h.config.clone(), difficulty: h.difficulty, mission: h.mission.clone(), event: String::new(), hidden: s.hidden && h.mission.is_empty(), pts, at: 0.0, mod_value: h.mod_value, uid: 0, heading, start, fresh: !h.mission.is_empty(), reset: false });
             }
         }
@@ -740,6 +763,9 @@ impl Roamers {
     /// flashed man: his core has left by its flashed exit (0xe35). The red light and freeway men draw again
     /// (`alt_men`); their reset position is their own script's and their place is kept.
     pub fn suspend(&mut self, on: bool, race: bool, vehicles: &mut Vehicles) {
+        if crate::rival_diag::enabled() {
+            crate::rival_diag::transition("roamer-suspension", format!("{on}:{race}"), format_args!("suspend={} race={} first_man_present={} first_car_present={}", on, race, self.men.iter().any(|m| m.mission == "RACE_GH_06"), vehicles.cars.iter().any(|c| c.racer && c.vinyl_name == "GH_06_0_vp_dsn_280z_75")));
+        }
         if on && !self.suspended {
             self.alt_suspended = true;
             let racing = self.alt_racing.take();
@@ -751,6 +777,9 @@ impl Roamers {
                 }
                 // (a race clears the cars itself; its own racers are not his)
                 if let (Some(ci), false) = (car, race) {
+                    if crate::rival_diag::enabled() && m.mission == "RACE_GH_06" {
+                        crate::rival_diag::record("roamer-car-removed", format_args!("reason=suspension uid={} car={} pos={:?}", vehicles.cars[ci].uid, vehicles.cars[ci].model.name, vehicles.cars[ci].state.pos));
+                    }
                     vehicles.cars.remove(ci);
                 }
                 m.at = match (m.uid, m.start) {
@@ -773,6 +802,7 @@ impl Roamers {
     }
 
     pub fn update(&mut self, game: &mut Game, vehicles: &mut Vehicles, gpu: &mut Gpu, world: &mut World, flash: bool, dt: f32) -> Option<usize> {
+        let diag = crate::rival_diag::enabled();
         self.near = None;
         self.near_mission = None;
         self.accepted = false;
@@ -805,6 +835,11 @@ impl Roamers {
         let mut spawn: Option<usize> = None;
         let mut ahead: Vec<(String, String)> = Vec::new();
         for (k, m) in self.men.iter_mut().enumerate() {
+            let first = diag && m.mission == "RACE_GH_06";
+            if first {
+                let car = vehicles.cars.iter().find(|c| c.racer && c.vinyl_name == m.config);
+                crate::rival_diag::transition("roamer-first-car", format!("{}:{}:{}:{}", car.is_some(), m.fresh, m.reset, self.suspended), format_args!("car={} config={} fresh={} reset={} suspended={} challenge={} player_pos={:?} car_uid={:?} car_pos={:?}", m.car, m.config, m.fresh, m.reset, self.suspended, self.challenge.is_some(), pp, car.map(|c| c.uid), car.map(|c| c.state.pos)));
+            }
             // (suspended, a man waits at his reset position, his car streamed out: CruisingHookmanCore 0x497..0x523)
             if self.suspended && m.reset {
                 continue;
@@ -836,10 +871,18 @@ impl Roamers {
                         }
                     }
                     if cp.distance(pp) > 420.0 && self.challenge.is_none() {
+                        if first {
+                            crate::rival_diag::record("roamer-car-removed", format_args!("reason=distance uid={} distance={:.1} player={:?} car={:?}", vehicles.cars[ci].uid, cp.distance(pp), pp, cp));
+                        }
                         vehicles.cars.remove(ci);
                     }
                 }
                 None => {
+                    if first {
+                        let reset_distance = m.start.or(m.pts.first().copied()).map(|p| p.distance(pp));
+                        let loop_distance = (!m.pts.is_empty()).then(|| loop_at(&m.pts, m.at).0.distance(pp));
+                        crate::rival_diag::transition("roamer-spawn-gates", format!("{}:{}:{}:{}:{}:{}:{}", m.fresh, m.reset, reset_distance.is_some_and(|d| d < 330.0), loop_distance.is_some_and(|d| d > 120.0 && d < 330.0), self.challenge.is_some(), only.is_some(), spawn.is_some()), format_args!("fresh={} reset={} reset_distance={:?} loop_distance={:?} challenge={} test_filter={:?} another_spawn_selected={} timer={:.3}", m.fresh, m.reset, reset_distance, loop_distance, self.challenge.is_some(), only, spawn.is_some(), self.timer));
+                    }
                     // (a mission's man is put at point 0 of his loop as his core starts and his
                     // car is in the world from then on - OpponentManager_AddOpponentToWorld,
                     // Racer_InitializeResetPosition, Racer_Reset, `0x40a56c35` 0x76..0x1a4 -: he
@@ -889,6 +932,10 @@ impl Roamers {
             }
         }
         let mut ready = None;
+        if diag && self.men.iter().any(|m| m.mission == "RACE_GH_06") {
+            let first_selected = spawn.is_some_and(|k| self.men[k].mission == "RACE_GH_06");
+            crate::rival_diag::transition("roamer-spawn-selection", format!("{first_selected}:{}", self.timer <= 0.0), format_args!("first_man_selected={} spawn_index={:?} spawn_timer={:.3}", first_selected, spawn, self.timer));
+        }
         if let Some(k) = spawn.filter(|_| self.timer <= 0.0) {
             let m = self.men[k].clone();
             // (his car as his set-up builds it: dressing him then finds it - docs/PERFORMANCE.md 2026-10-23 (6))
@@ -896,6 +943,12 @@ impl Roamers {
                 self.setup_cfg.insert(m.config.clone(), game.mc4_dress_of(&m.car, &m.config).map(|x| x.cfg).unwrap_or_default());
             }
             let cfg = self.setup_cfg[&m.config].clone();
+            if diag && m.mission == "RACE_GH_06" {
+                let model = vehicles.models.iter().any(|x| x.name.eq_ignore_ascii_case(&m.car) && x.cfg == cfg);
+                let dir = game.car_dirs.iter().find(|d| d.file_name().is_some_and(|f| f.to_string_lossy().eq_ignore_ascii_case(&m.car)));
+                let reading = dir.is_some_and(|d| vehicles.reading(d));
+                crate::rival_diag::transition("roamer-model", format!("{model}:{}:{reading}", dir.is_some()), format_args!("car={} model_ready={} dir={:?} reading={} load_timer={:.3} config={}", m.car, model, dir, reading, self.load_timer, m.config));
+            }
             match vehicles.models.iter().find(|x| x.name.eq_ignore_ascii_case(&m.car) && x.cfg == cfg).cloned() {
                 None => {
                     // his car has to be in memory first
@@ -916,6 +969,12 @@ impl Roamers {
                     }
                 }
                 Some(model) => ready = Some((k, m, model)),
+            }
+        }
+        if diag {
+            crate::rival_diag::transition("roamer-nav", format!("{}", world.nav.is_some()), format_args!("nav_present={} first_man_present={} first_model_ready={}", world.nav.is_some(), self.men.iter().any(|m| m.mission == "RACE_GH_06"), ready.as_ref().is_some_and(|(_, m, _)| m.mission == "RACE_GH_06")));
+            if let Some((_, m, model)) = ready.as_ref().filter(|(_, m, _)| m.mission == "RACE_GH_06") {
+                crate::rival_diag::transition("roamer-model-gate", format!("{}:{}:{}:{}", is_racer_model(&model.name), model.name == pname, m.fresh, only.is_some()), format_args!("model={} is_racer_model={} same_as_player={} fresh={} test_filter={:?}", model.name, is_racer_model(&model.name), model.name == pname, m.fresh, only));
             }
         }
         let Some(nav) = world.nav.as_ref() else { return None };
@@ -956,12 +1015,21 @@ impl Roamers {
                     // loop's point itself can be 30 m off the road, inside a block with no collision: the car fell through the
                     // map, AI.md NEW 6. No rail with ground within 80 m: not this time)
                     let placed = rail_place(world, at);
+                    if diag && m.mission == "RACE_GH_06" {
+                        let nearest = nav.nearest_link(at);
+                        let occupied = placed.as_ref().is_some_and(|(p, _, _, _)| vehicles.cars.iter().any(|c| c.state.pos.distance(*p) < 25.0));
+                        let close = nearest.as_ref().is_some_and(|(_, _, d)| *d < 30.0);
+                        crate::rival_diag::transition("roamer-placement", format!("{}:{}:{close}:{at_reset}:{occupied}", placed.is_some(), nearest.is_some()), format_args!("source={:?} rail={:?} nearest_link={:?} at_reset={} occupied_within_25m={} player_distance={:.1} stored_fresh_reset_already_cleared=true", at, placed, nearest, at_reset, occupied, at.distance(pp)));
+                    }
                     if let (Some((li, t, d)), Some((at, _, rail_fwd, rail_v))) = (nav.nearest_link(at), placed) {
                         if d < 30.0 && (at_reset || !vehicles.cars.iter().any(|c| c.state.pos.distance(at) < 25.0)) {
                             let dir = if at_reset { dir } else { rail_fwd };
                             let rgb = game.rivals.paint_of(&m.config);
                             let color = rgb.map(|c| [c[0], c[1], c[2], 1.0]).unwrap_or(PALETTE[(self.rand() * PALETTE.len() as f32) as usize % PALETTE.len()]);
                             let idx = vehicles.spawn(gpu, model, at, (-dir.x).atan2(-dir.z), color, false);
+                            if diag && m.mission == "RACE_GH_06" {
+                                crate::rival_diag::record("roamer-spawned", format_args!("mission={} character={} model={} config={} uid={} index={} pos={:?} at_reset={}", m.mission, m.name, vehicles.cars[idx].model.name, m.config, vehicles.cars[idx].uid, idx, at, at_reset));
+                            }
                             let c = &mut vehicles.cars[idx];
                             c.racer = true;
                             // (going at the rail's speed along it, as the teleport's F-86308 sets it)
@@ -1299,6 +1367,67 @@ impl Roamers {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Synthetic mission input exercises the actual new-game -> call -> slot -> cruising-man
+    /// sequence. This is an isolation test, not proof that GPU/rails spawn the real disc car.
+    #[test]
+    fn first_mission_requests_the_same_rival_after_its_scene_in_both_languages() {
+        use crate::mc4::{CruisingSlot, PRIO_FREE};
+        use mcla_formats::{hash::joaat, strtbl::StringTable};
+        let root = std::env::temp_dir().join(format!("mcla-first-rival-sync-{}", std::process::id()));
+        std::fs::create_dir_all(root.join("tune/career/missions")).unwrap();
+        struct Fixture(std::path::PathBuf);
+        impl Drop for Fixture {
+            fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); }
+        }
+        let fixture = Fixture(root);
+        // No original mission XML or disc text: only the fields consumed by Career::load.
+        std::fs::write(fixture.0.join("tune/career/missions/RACE_GH_06.xml"), r#"
+            <Mission>
+              <szId content="ascii">RACE_GH_06</szId>
+              <szHookmanNameId content="ascii">GH_06</szHookmanNameId>
+              <szDistrictName content="ascii">Hollywood</szDistrictName>
+              <aObjectives><Item type="mcRequirement">
+                <szDescriptionId content="ascii">SYNTHETIC_OBJECTIVE</szDescriptionId>
+                <aConditions><Item type="mcConditionEvent">
+                  <szEventId content="ascii">SYNTHETIC_UNFINISHED</szEventId>
+                </Item></aConditions>
+              </Item></aObjectives>
+              <szEventDescription content="ascii">RACE_GH_06_READY_TO_START_ON_ENTER</szEventDescription>
+            </Mission>"#).unwrap();
+        let mut expected = None;
+        for lang in [0, 1] {
+            let mut g = Game::new(Vec::new(), 0);
+            g.fresh_game = true;
+            g.career = crate::career::Career::load(fixture.0.to_str().unwrap());
+            g.career.strings = StringTable {
+                keys: Vec::new(),
+                langs: ["EN_CHARACTER_SENTINEL", "ES_\u{f1}_CHARACTER_SENTINEL"].into_iter().map(|s| [(joaat("GH_06"), s.to_string())].into_iter().collect()).collect(),
+                lang,
+            };
+            g.career.new_game();
+            let mut roam = Roamers::new();
+            let slot = CruisingSlot { script: "Game/CruisingHookmen/hw_slot1".into(), default_id: 0, hookman: None, priority: PRIO_FREE, hidden: false };
+            roam.sys.slots = vec![vec![slot], Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+            roam.sys.thresholds = vec![Vec::new(); 5];
+            roam.sys.characters = vec![vec![("GH_06".into(), false)], Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+            let points = vec![Vec3::ZERO, Vec3::X * 50.0, Vec3::Z * 50.0];
+            roam.loops.insert("hw_slot1".into(), points.clone());
+            roam.sync(&mut g, "vp_synthetic_player");
+            assert!(!g.career.mission_in_log("RACE_GH_06"));
+            assert!(roam.men.is_empty(), "the first mission waits until its scene is delivered");
+            g.career.call_delivered("RACE_GH_06");
+            roam.sync(&mut g, "vp_synthetic_player");
+            assert!(g.career.mission_in_log("RACE_GH_06"));
+            assert_eq!(roam.men.len(), 1);
+            let man = &roam.men[0];
+            assert_eq!((&*man.mission, &*man.name, &*man.car, &*man.config), ("RACE_GH_06", "GH_06", "vp_dsn_280z_75", "GH_06_0_vp_dsn_280z_75"));
+            assert_eq!(man.pts, points);
+            assert!(man.fresh && !man.reset && !man.hidden);
+            let actual = roam.sys.slots[0][0].hookman.clone().unwrap();
+            if let Some(expected) = &expected { assert_eq!(&actual, expected); } else { expected = Some(actual); }
+        }
+    }
 
     #[test]
     fn a_man_goes_round_his_loop() {

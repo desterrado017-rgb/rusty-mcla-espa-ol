@@ -144,6 +144,7 @@ const PAUSE_FRAME: Vec3 = Vec3::new(0.0, 1.42, 0.08);
 /// road of CUT_STORY_RACE_GH_06 (F-86195 finds it), index 0 for the scene, -1 after it.
 const GH_06_SCENE_ROAD: Vec3 = Vec3::new(-234.0, 21.0, -733.0);
 mod rivals;
+mod rival_diag;
 mod rubber;
 mod rumble;
 mod aiv;
@@ -6022,6 +6023,9 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                         // slot request of his man come after the scene; the other ON_ENTER scripts
                         // play no scene of their own)
                         let after_scene = c == "SIDEKICK_RACE_GH_06" && scene.is_some() && std::env::var("MCLA_NO_CUTS").is_err() && (self.opt.shot.is_none() || std::env::var("MCLA_CUTS").is_ok());
+                        if c == "SIDEKICK_RACE_GH_06" {
+                            rival_diag::record("briefing", format_args!("scene={:?} after_scene={} fresh_game={} table_lang={}", scene.map(|i| self.cuts.scenes[i].name.as_str()), after_scene, self.game.fresh_game, self.game.career.strings.lang));
+                        }
                         if after_scene {
                             // (its script clears the road of the scene first - AmbientMgr_SetRoadDensity((-234, 21,
                             // -733), 0) at 0x8dc - and gives it back after the scene, 0xab1)
@@ -6128,6 +6132,7 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                         self.vehicles.set_road_density(GH_06_SCENE_ROAD, -1);
                     }
                     self.game.career.call_delivered(&id);
+                    if id == rival_diag::MISSION { rival_diag::snapshot(&self.game, "briefing-delivered"); }
                 }
             }
             // the reminder kept for after a story scene
@@ -9681,6 +9686,9 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
             let (eye, view) = if self.drive && self.vehicles.player().is_some() { (self.chase.pos, self.chase.view()) } else { (self.cam.pos, self.cam.view()) };
             let axis = -Vec3::new(view.x_axis.z, view.y_axis.z, view.z_axis.z);
             self.vehicles.pick_lods(eye, axis, self.lod_near, crate::props::Lod::now(), &frustum, &occluded);
+            if rival_diag::enabled() && self.frame_no % 60 == 0 && self.game.career.mission_active(rival_diag::MISSION) {
+                rival_diag::sample_grid(&self.game, &self.vehicles, "render", self.cine.playing.as_ref().map_or("", |s| s.name.as_str()), Some(&world));
+            }
             self.vehicles.pick_cones(eye, &frustum, &occluded, &world.collider);
             self.peds.pick_lods(eye, axis, self.lod_near, crate::props::Lod::now(), &frustum, &occluded);
             // (the original's renderer flag of F-31789, set while the game is paused: the plants' model angle x 0.9)
@@ -12345,6 +12353,7 @@ log::info!("stuck2: car {} {} grounded {} up.y {:.2} speed {:.2} rpm {:.0} veh {
                 // (a race against a red light or freeway man: its checkpoints' radius; a freeway
                 // race goes on from where the two are - althk.rs)
                 if started {
+                    rival_diag::grid_created(&self.game, &self.vehicles);
                     self.game.alt_after_start(&mut self.vehicles);
                     // (the race core's set-up, OrderedCheckpointCore 0xd4e / 0xde6: Racer_ResetWithDamageIntact on
                     // every racer - F-30391(0): the engine word +46 = 1 and the hold off)
@@ -13453,6 +13462,7 @@ impl App {
     /// the movie, the UI's context, so that the UI's art and movies and the traffic's lanes are made here too
     /// instead of in the first frames.
     fn load_game(&mut self, mut gpu: Gpu, audio_root: Option<&std::path::Path>, ui: Option<&egui::Context>) {
+        rival_diag::session(&self.opt.data_dir);
         let t0 = Instant::now();
         let lap = |what: &str| log::info!("startup: {} at {} ms", what, t0.elapsed().as_millis());
         let assets = Arc::new(Assets::new(&self.opt.data_dir));
@@ -13584,6 +13594,7 @@ impl App {
             self.game.career.selftest();
         }
         self.game.career.new_game();
+        rival_diag::snapshot(&self.game, "career-new-game");
         // (test runs - a screenshot, a frame limit, the self-driving and test hooks - never
         // write the player's save)
         self.game.no_save = self.opt.shot.is_some() || self.opt.auto || ["MCLA_ROAM_TEST", "MCLA_CAREER_TEST", "MCLA_SIM_TEST", "MCLA_WAGER_TEST"].iter().any(|v| std::env::var(v).is_ok());
@@ -13591,6 +13602,7 @@ impl App {
         let test_save = std::env::var("MCLA_SAVE_FILE").is_ok();
         if self.opt.car_dir.is_none() || self.opt.shot.is_none() || test_save {
             self.game.load_save(&self.opt.data_dir);
+            rival_diag::snapshot(&self.game, "save-loaded");
             self.game.ensure_owned();
             self.game.sync_car_paint();
             self.game.sync_extra_parts();

@@ -5615,16 +5615,36 @@ if keep || c.state.pos.distance(center) < 450.0 {
     fn draw_x<'a>(&'a self, pass: &mut wgpu::RenderPass<'a>, gpu: &'a Gpu, blend_pass: bool, draws: &mut usize, range: Option<(Vec3, f32)>, frustum: Option<&crate::render::Frustum>, skip_ambient: bool, cull: Option<bool>) {
         // (the opaque pass of `draw_culled`: each batch with its material's own pipeline once it is built - `car_pipe`)
         let own = cull.is_some() && !blend_pass;
+        // Observe only the main view's opaque pass, not reflections, shadows or glass.
+        let trace_main = !blend_pass && cull == Some(false) && frustum.is_some() && range.is_some_and(|(_, max)| max == 450.0) && crate::rival_diag::enabled();
         let mut pick = (0u8, u32::MAX, false);
         for (ci, c) in self.cars.iter().enumerate() {
+            let trace = trace_main && c.driver.eq_ignore_ascii_case("GH_06");
+            let trace_body = |reason: &str, body_draws: usize, body_indices: u64| {
+                if !trace { return; }
+                let pose = c.render_pose(self.render_alpha);
+                let finite = c.state.pos.is_finite() && c.state.rot.is_finite() && pose.pos.is_finite() && pose.rot.is_finite();
+                let lod = self.lod_pick.get(ci).copied();
+                crate::rival_diag::transition("render-body", format!("{}:{}:{}:{:?}:{}:{}", c.uid, reason, finite, lod, body_draws, body_indices), format_args!(
+                    "reason={} index={} uid={} model={} driver={} pos={:?} render_pos={:?} render_rot={:?} finite={} lod={:?} range_max={:?} distance={:?} model_batches={} submitted_body_draws={} submitted_body_indices={} stealth={} is_player={} hide_player={}",
+                    reason, ci, c.uid, c.model.name, c.driver, c.state.pos, pose.pos, pose.rot, finite, lod,
+                    range.map(|(_, max)| max), range.map(|(eye, _)| pose.pos.distance(eye)), c.model.batches.len(), body_draws, body_indices,
+                    c.pu_stealth, c.is_player, self.hide_player
+                ));
+            };
             // (step 19g: a car under Stealth is not drawn in either pass of its own - pu_fx.rs)
             if c.pu_stealth {
+                trace_body("stealth", 0, 0);
                 continue;
             }
             if skip_ambient && c.is_ambient() {
+                trace_body("skip-ambient", 0, 0);
                 continue;
             }
-            let Some((batches, groups)) = self.lod_batches(ci) else { continue };
+            let Some((batches, groups)) = self.lod_batches(ci) else {
+                trace_body("negative-lod", 0, 0);
+                continue;
+            };
             // (a bumper with an end loose or torn off - +512 / +516 of its object: drawn with both sides; 0 rear, 1 front)
             let hangs = |k: usize| c.state.parts.bumpers[k].as_ref().is_some_and(|b| b.a.state != 0 || b.b.state != 0);
             let two_sided = |b: &GpuBatch| match b.cull {
@@ -5641,6 +5661,7 @@ if keep || c.state.pos.distance(center) < 450.0 {
             if let Some((eye, max)) = range.filter(|_| !by_lod) {
                 let d = pos.distance(eye);
                 if d > max {
+                    trace_body("out-of-range", 0, 0);
                     continue;
                 }
                 // wheels are a few pixels beyond this
@@ -5649,6 +5670,7 @@ if keep || c.state.pos.distance(center) < 450.0 {
             if let Some(f) = frustum.filter(|_| !by_lod) {
                 let r = Vec3::splat(c.model.params.body_half.length() + 1.0);
                 if !f.intersects_aabb(pos - r, pos + r) {
+                    trace_body("frustum-rejected", 0, 0);
                     continue;
                 }
             }
@@ -5720,6 +5742,8 @@ if keep || c.state.pos.distance(center) < 450.0 {
                 }
                 pass.set_pipeline(&gpu.pipeline_blend);
             }
+            let draws_before = trace.then(|| *draws);
+            let mut body_indices = 0u64;
             for (bi, b) in batches.iter().enumerate() {
                 if b.mode.blended() != blend_pass || b.bucket == 1 {
                     continue;
@@ -5749,6 +5773,13 @@ if keep || c.state.pos.distance(center) < 450.0 {
                 pass.set_index_buffer(b.ib.slice(..), wgpu::IndexFormat::Uint32);
                 pass.draw_indexed(0..b.count, 0, 0..1);
                 *draws += 1;
+                if trace {
+                    body_indices += u64::from(b.count);
+                }
+            }
+            if let Some(before) = draws_before {
+                let submitted = *draws - before;
+                trace_body(if submitted == 0 { "no-body-draws" } else { "submitted" }, submitted, body_indices);
             }
             if !blend_pass && wheels_visible && c.model.own_wheels.is_none() {
                 // garage choice, else the car's stock wheels, else the generic set

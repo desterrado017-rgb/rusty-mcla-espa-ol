@@ -3427,6 +3427,10 @@ impl Game {
 
     /// Start one of the game's own races: original grid, checkpoints and laps.
     pub fn start_race_def(&mut self, idx: usize, world: &World, vehicles: &mut Vehicles, gpu: &crate::render::Gpu) -> bool {
+        crate::rival_diag::snapshot(self, "race-request");
+        if crate::rival_diag::enabled() {
+            crate::rival_diag::record("race-request", format_args!("index={} definition={:?} nav={} player={} cars={} grid_rivals={:?}", idx, self.race_defs.get(idx).map(|d| (&d.id, d.grid.len(), d.opponents)), world.nav.is_some(), vehicles.player().is_some(), vehicles.cars.len(), self.grid_rivals.iter().map(|r| (&r.id, &r.car, &r.config)).collect::<Vec<_>>()));
+        }
         self.rb_step = None;
         let Some(def) = self.race_defs.get(idx).cloned() else { return false };
         let Some(nav) = world.nav.as_ref() else { return false };
@@ -3706,6 +3710,9 @@ impl Game {
             RaceKind::Race if self.series.is_some() => 3.min(def.grid.len().saturating_sub(1)),
             RaceKind::Race => def.opponents.clamp(1, 7).min(def.grid.len().saturating_sub(1)),
         };
+        if crate::rival_diag::enabled() {
+            crate::rival_diag::record("grid-plan", format_args!("id={} kind={:?} grid_slots={} opponents={} hookman_race={} time_trial={} mc4_time_trial={} wager={} named_rivals={}", def.id, kind, def.grid.len(), n_opp, self.hookman_race, self.career.is_time_trial(&def.id), self.mc4_tt_of(&def.id).is_some(), self.wager.is_some(), self.grid_rivals.len()));
+        }
         if kind == RaceKind::Race {
             // (the race core scripts bind the start scene to RaceGrid_GetPosition(grid, 0) and its
             // heading - CineScript_SetGameCoordSysBinding, OrderedCheckpointCore / UnorderedCheckpointCore)
@@ -3769,6 +3776,7 @@ impl Game {
             }
             let top = model.params.top_speed;
             let idx = vehicles.spawn(gpu, model, p + Vec3::Y * 0.9, yaw, color, false);
+            crate::rival_diag::record("grid-spawn", format_args!("slot={} index={} uid={} model={} driver={} config={} pos={:?}", k + 1, idx, vehicles.cars[idx].uid, vehicles.cars[idx].model.name, driver, vinyl, vehicles.cars[idx].state.pos));
             log::debug!("grid car {}: {} plate [{}] livery {}", k, vehicles.cars[idx].model.name, plate, vinyl);
             // (diagnostics, docs/AI.md: MCLA_OPP_PERF=<0..1> fits the opponents' cars with that much of their upgrades)
             if let Some(f) = std::env::var("MCLA_OPP_PERF").ok().and_then(|v| v.parse::<f32>().ok()) {
